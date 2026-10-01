@@ -14,16 +14,399 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          branch_id: string | null
+          business_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: number
+          payload: Json
+          request_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          branch_id?: string | null
+          business_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: never
+          payload?: Json
+          request_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          branch_id?: string | null
+          business_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: never
+          payload?: Json
+          request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_log_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      branches: {
+        Row: {
+          business_id: string
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          physical_address: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          physical_address?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          physical_address?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      business_memberships: {
+        Row: {
+          all_branches: boolean
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["business_role"]
+          status: Database["public"]["Enums"]["membership_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          all_branches?: boolean
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["business_role"]
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          all_branches?: boolean
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["business_role"]
+          status?: Database["public"]["Enums"]["membership_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_memberships_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      businesses: {
+        Row: {
+          created_at: string
+          created_by: string
+          currency: string
+          email: string | null
+          id: string
+          kra_pin: string | null
+          legal_name: string | null
+          lifecycle_state: Database["public"]["Enums"]["business_lifecycle"]
+          name: string
+          organization_id: string
+          phone: string | null
+          physical_address: string | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          currency?: string
+          email?: string | null
+          id?: string
+          kra_pin?: string | null
+          legal_name?: string | null
+          lifecycle_state?: Database["public"]["Enums"]["business_lifecycle"]
+          name: string
+          organization_id: string
+          phone?: string | null
+          physical_address?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          currency?: string
+          email?: string | null
+          id?: string
+          kra_pin?: string | null
+          legal_name?: string | null
+          lifecycle_state?: Database["public"]["Enums"]["business_lifecycle"]
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          physical_address?: string | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "businesses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idempotency_keys: {
+        Row: {
+          actor_user_id: string
+          business_id: string
+          created_at: string
+          idem_key: string
+          request_hash: string
+          response: Json | null
+          scope: string
+        }
+        Insert: {
+          actor_user_id: string
+          business_id: string
+          created_at?: string
+          idem_key: string
+          request_hash: string
+          response?: Json | null
+          scope: string
+        }
+        Update: {
+          actor_user_id?: string
+          business_id?: string
+          created_at?: string
+          idem_key?: string
+          request_hash?: string
+          response?: Json | null
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membership_branches: {
+        Row: {
+          branch_id: string
+          created_at: string
+          membership_id: string
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          membership_id: string
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          membership_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_branches_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membership_branches_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "business_memberships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          permission: string
+          role: Database["public"]["Enums"]["business_role"]
+        }
+        Insert: {
+          permission: string
+          role: Database["public"]["Enums"]["business_role"]
+        }
+        Update: {
+          permission?: string
+          role?: Database["public"]["Enums"]["business_role"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_business_member: {
+        Args: {
+          _branch_ids?: string[]
+          _business: string
+          _role: Database["public"]["Enums"]["business_role"]
+          _user: string
+        }
+        Returns: string
+      }
+      can_access_branch: { Args: { _branch: string }; Returns: boolean }
+      claim_idempotency: {
+        Args: {
+          _business: string
+          _key: string
+          _request_hash: string
+          _scope: string
+        }
+        Returns: Json
+      }
+      complete_idempotency: {
+        Args: {
+          _business: string
+          _key: string
+          _response: Json
+          _scope: string
+        }
+        Returns: undefined
+      }
+      create_business: {
+        Args: { _branch_code?: string; _branch_name: string; _name: string }
+        Returns: string
+      }
+      has_permission: {
+        Args: { _business: string; _permission: string }
+        Returns: boolean
+      }
+      is_business_member: { Args: { _business: string }; Returns: boolean }
+      member_role: {
+        Args: { _business: string }
+        Returns: Database["public"]["Enums"]["business_role"]
+      }
+      resolve_tenant_context: {
+        Args: { _branch?: string; _business: string }
+        Returns: Json
+      }
+      write_audit: {
+        Args: {
+          _action: string
+          _branch: string
+          _business: string
+          _entity_id: string
+          _entity_type: string
+          _payload: Json
+          _request_id?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
-      [_ in never]: never
+      business_lifecycle: "setup" | "active" | "suspended" | "closed"
+      business_role: "owner" | "manager" | "cashier" | "auditor"
+      membership_status: "invited" | "active" | "suspended" | "revoked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +533,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      business_lifecycle: ["setup", "active", "suspended", "closed"],
+      business_role: ["owner", "manager", "cashier", "auditor"],
+      membership_status: ["invited", "active", "suspended", "revoked"],
+    },
   },
 } as const
