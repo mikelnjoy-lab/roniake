@@ -19,7 +19,7 @@ begin
 end $$;
 create function pg_temp.as_admin() returns void language plpgsql as $$
 begin
-  perform set_config('role', 'postgres', true);
+  perform set_config('role', 'none', true);
   perform set_config('request.jwt.claims', '', true);
 end $$;
 create function pg_temp.ok(_t text, _p boolean, _d text default null) returns void language sql as $$
