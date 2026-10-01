@@ -180,7 +180,13 @@ begin
   perform pg_temp.ok('IDEM-05 idempotency table not directly readable', raised);
 end $$;
 
-select pg_temp.as_admin();
-select test, passed, detail from t_results order by id;
-select count(*) filter (where passed) as passed, count(*) filter (where not passed) as failed, count(*) as total from t_results;
+-- Report: raised as an exception so the whole run ALWAYS rolls back, whatever runner is used.
+do $$
+declare rep text; p int; f int;
+begin
+  perform pg_temp.as_admin();
+  select count(*) filter (where passed), count(*) filter (where not passed) into p, f from t_results;
+  select string_agg(case when passed then 'PASS ' else 'FAIL ' end || test || coalesce(' ['||detail||']',''), E'\n' order by id) into rep from t_results;
+  raise exception E'PHASE0_REPORT passed=% failed=% total=%\n%', p, f, p+f, rep;
+end $$;
 rollback;
