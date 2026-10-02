@@ -355,6 +355,10 @@ export type Database = {
         Returns: string
       }
       can_access_branch: { Args: { _branch: string }; Returns: boolean }
+      can_access_branch_row: {
+        Args: { _branch: string; _business: string }
+        Returns: boolean
+      }
       claim_idempotency: {
         Args: {
           _business: string
