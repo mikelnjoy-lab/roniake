@@ -8,6 +8,13 @@
       "when": 1790834456865,
       "tag": "0000_phase0_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790918489856,
+      "tag": "0001_fix_branch_select_policy_snapshot",
+      "breakpoints": true
     }
   ]
 }
