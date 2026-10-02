@@ -15,6 +15,13 @@
       "when": 1790918489856,
       "tag": "0001_fix_branch_select_policy_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790918542520,
+      "tag": "0002_tighten_default_table_privileges",
+      "breakpoints": true
     }
   ]
 }
