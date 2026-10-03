@@ -29,5 +29,21 @@ Reference specs (Master Architecture v2.0.0, Implementation Plan v1.1.0, Build B
 - **Run 3:** **49 passed, 0 failed.**
 - Scope: database-level checks with simulated `anon`/`authenticated` JWT roles. End-to-end sign-in through the app isn't tested yet; that belongs to Application Assembly → Authentication.
 
+## Phase 1 — Core Domain & Transaction Engine — 🔵 VERIFIED (database checks; 2026-10-03)
+
+| Item | Status | Notes |
+|---|---|---|
+| Catalog (SKU, barcode, unit, price, tax class A–E, weighted/PLU, packs) | 🔵 | migration 0003; CAT-01..07 |
+| Branch stock + immutable stock ledger, WAC | 🔵 | INV-01..11, SAL-29 |
+| Bulk breaking (pack → units at split WAC) | 🔵 | INV-02 |
+| Authorized stock adjustments (reason required, audited) | 🔵 | INV-03/04/07 |
+| Sale engine `post_sale`: server prices, permissioned discounts, split tender, cash-only change, M-Pesa manual code, VAT-inclusive tax | 🔵 | SAL-01..04, 13..18 |
+| Offline-safe idempotency (client transaction id replay / mismatch reject) | 🔵 | SAL-05..07 |
+| Immutable COGS frozen from WAC at sale | 🔵 | SAL-08, SAL-12 |
+| Sales/lines/tenders immutable; tenant + branch isolation; audit | 🔵 | SAL-19..28 |
+| Phase 1 verification suite | 🔵 | `tests/phase1/verification.sql`: **47 checks, 47 passed, 0 failed** (first run). Always rolls back. |
+
+Not in Phase 1 (later build steps): shifts/blind close, Deni credit sales, sale voids/refunds, stock audits (count sessions), M-Pesa STK/C2B, eTIMS submission. Stock may go negative on sale so offline sales are never refused; negative stock is for review.
+
 ## Production Application Assembly & Controlled Pilot
 Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided setup ⬜ · User/role management ⬜ · POS ⬜ · Shifts ⬜ · Receipts ⬜ · Offline UX ⬜ · Inventory UX ⬜ · Back Office ⬜ · Customers/Deni ⬜ · M-Pesa UX ⬜ (manual first; Daraja credentials pending) · eTIMS UX ⬜ · Subscription UX ⬜ · Support-access UX ⬜ · Deployment ⬜ · Infrastructure prerequisites ⬜ · External approvals 🔴 (Daraja production, KRA eTIMS) · Controlled pilot onboarding ⬜
