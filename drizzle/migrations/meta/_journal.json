@@ -22,6 +22,13 @@
       "when": 1790918542520,
       "tag": "0002_tighten_default_table_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791000868668,
+      "tag": "0003_phase1_core_domain_transaction_engine",
+      "breakpoints": true
     }
   ]
 }
