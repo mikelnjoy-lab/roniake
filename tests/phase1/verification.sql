@@ -99,17 +99,6 @@ begin
   begin insert into public.stock_movements(business_id, branch_id, product_id, movement_type, qty, unit_cost, qty_after, wac_after) values (biz_a, br_a1, p_sugar, 'receipt', 1, 1, 1, 1); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('INV-11 clients cannot write the stock ledger', raised);
 
-  -- ---------- SALES ENGINE ----------
-  perform pg_temp.as_user(uc);
-  r := public.post_sale(br_a1, txn,
-    jsonb_build_array(jsonb_build_object('product_id', p_sugar, 'qty', 2), jsonb_build_object('product_id', p_meat, 'qty', 0.75),
-                      jsonb_build_object('product_id', p_svc, 'qty', 1)),
-    jsonb_build_array(jsonb_build_object('type','mpesa_manual','amount',500,'reference','SJK3H7X9QA'), jsonb_build_object('type','cash','amount',500)),
-    'tablet-1');
-  -- 2*200 + 0.75*700 (525) + 100 = 1025; tendered 1000 < 1025 -> must have failed? (see SAL-01 below uses correct tender)
-  perform pg_temp.ok('SAL-00 setup sale posted', r->>'status' = 'created', r::text);
-exception when others then
-  perform pg_temp.ok('SAL-00 setup sale posted', false, sqlerrm);
 end $$;
 
 -- Sales checks run in their own block so a failing setup above is reported, not hidden.
@@ -211,7 +200,7 @@ declare rep text; p int; f int;
 begin
   perform pg_temp.as_admin();
   select count(*) filter (where passed), count(*) filter (where not passed) into p, f from t_results;
-  select string_agg(case when passed then 'PASS ' else 'FAIL ' end || test || coalesce(' ['||detail||']',''), E'\n' order by id) into rep from t_results where not passed or true;
+  select string_agg(case when passed then 'PASS ' else 'FAIL ' end || test || coalesce(' ['||detail||']',''), E'\n' order by id) into rep from t_results;
   raise exception E'PHASE1_REPORT passed=% failed=% total=%\n%', p, f, p+f, rep;
 end $$;
 rollback;
