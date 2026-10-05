@@ -47,3 +47,9 @@ Not in Phase 1 (later build steps): shifts/blind close, Deni credit sales, sale 
 
 ## Production Application Assembly & Controlled Pilot
 Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided setup ⬜ · User/role management ⬜ · POS ⬜ · Shifts ⬜ · Receipts ⬜ · Offline UX ⬜ · Inventory UX ⬜ · Back Office ⬜ · Customers/Deni ⬜ · M-Pesa UX ⬜ (manual first; Daraja credentials pending) · eTIMS UX ⬜ · Subscription UX ⬜ · Support-access UX ⬜ · Deployment ⬜ · Infrastructure prerequisites ⬜ · External approvals 🔴 (Daraja production, KRA eTIMS) · Controlled pilot onboarding ⬜
+
+## Application Assembly — Step 1: Authentication & Secure Business Entry — 🟡 IN PROGRESS (built, awaiting live sign-in test)
+- Email/password + Google sign-in, sign-up with email confirmation, password reset, secure sign-out (cache cleared, history replaced).
+- Protected area gated by session; business list from RLS-scoped active memberships; single business auto-selected; branch list from RLS (`can_access_branch_row`).
+- Active context re-resolved server-side via `resolve_tenant_context` on every entry; rejection → /unauthorized and stored selection cleared. Browser stores only the chosen IDs, never permissions.
+- First-time users create a business through `create_business` (become Owner).
