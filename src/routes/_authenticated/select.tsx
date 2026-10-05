@@ -53,7 +53,7 @@ function SelectPage() {
   });
 
   useEffect(() => {
-    if (memberships.data?.length === 1 && !businessId) setBusinessId(memberships.data[0].business_id);
+    if (memberships.data?.length === 1 && !businessId) setBusinessId(memberships.data[0]!.business_id);
   }, [memberships.data, businessId]);
 
   async function enter(branchId: string) {
@@ -139,7 +139,7 @@ function CreateBusiness({ onCreated }: { onCreated: (id: string) => void }) {
     setBusy(true);
     const { data, error } = await supabase.rpc("create_business", { _name: name, _branch_name: branch, _branch_code: code });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     onCreated(data as string);
   }
 

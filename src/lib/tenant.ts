@@ -31,10 +31,7 @@ export function setSelection(s: Selection | null) {
 }
 
 export async function resolveContext(s: Selection): Promise<TenantContext> {
-  const { data, error } = await supabase.rpc("resolve_tenant_context", {
-    _business: s.businessId,
-    _branch: s.branchId ?? undefined,
-  });
+  const { data, error } = await supabase.rpc("resolve_tenant_context", s.branchId ? { _business: s.businessId, _branch: s.branchId } : { _business: s.businessId });
   if (error) throw error;
   return data as unknown as TenantContext;
 }
