@@ -29,6 +29,13 @@
       "when": 1791000868668,
       "tag": "0003_phase1_core_domain_transaction_engine",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791172633870,
+      "tag": "0004_phase2_shifts",
+      "breakpoints": true
     }
   ]
 }

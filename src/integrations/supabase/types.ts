@@ -680,6 +680,63 @@ export type Database = {
           },
         ]
       }
+      shifts: {
+        Row: {
+          branch_id: string
+          business_id: string
+          cashier_id: string
+          closed_at: string | null
+          counted_cash: number | null
+          expected_cash: number | null
+          id: string
+          opened_at: string
+          opening_float: number
+          status: string
+          variance: number | null
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          cashier_id: string
+          closed_at?: string | null
+          counted_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          opened_at?: string
+          opening_float: number
+          status?: string
+          variance?: number | null
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          cashier_id?: string
+          closed_at?: string | null
+          counted_cash?: number | null
+          expected_cash?: number | null
+          id?: string
+          opened_at?: string
+          opening_float?: number
+          status?: string
+          variance?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shifts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shifts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_movements: {
         Row: {
           actor_user_id: string | null
@@ -812,6 +869,7 @@ export type Database = {
         }
         Returns: Json
       }
+      close_shift: { Args: { _counted: number; _shift: string }; Returns: Json }
       complete_idempotency: {
         Args: {
           _business: string
@@ -834,6 +892,8 @@ export type Database = {
         Args: { _business: string }
         Returns: Database["public"]["Enums"]["business_role"]
       }
+      my_open_shift: { Args: { _branch: string }; Returns: Json }
+      open_shift: { Args: { _branch: string; _float: number }; Returns: string }
       post_sale: {
         Args: {
           _branch: string
