@@ -35,18 +35,18 @@ function Shift() {
     queryFn: async () => (await supabase.from("shifts").select("*").eq("branch_id", branch).order("opened_at", { ascending: false }).limit(20)).data ?? [],
   });
   const [amt, setAmt] = useState("");
-  const [result, setResult] = useState<Record<string, number | string> | null>(null);
+  const [result, setResult] = useState<{ counted: number; expected?: number; variance?: number } | null>(null);
 
   const openShift = async () => {
     const { error } = await supabase.rpc("open_shift", { _branch: branch, _float: Number(amt || 0) });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setAmt(""); toast.success("Shift opened"); qc.invalidateQueries({ queryKey: ["my-shift"] });
   };
   const closeShift = async () => {
-    if (!shift.data || amt === "") return toast.error("Enter the cash you counted");
+    if (!shift.data || amt === "") { toast.error("Enter the cash you counted"); return; }
     const { data, error } = await supabase.rpc("close_shift", { _shift: shift.data.id, _counted: Number(amt) });
-    if (error) return toast.error(error.message);
-    setResult(data as Record<string, number>); setAmt("");
+    if (error) { toast.error(error.message); return; }
+    setResult(data as { counted: number; expected?: number; variance?: number }); setAmt("");
     qc.invalidateQueries({ queryKey: ["my-shift"] }); qc.invalidateQueries({ queryKey: ["shifts"] });
   };
 
@@ -56,7 +56,7 @@ function Shift() {
       {result && (
         <div className="mt-3 rounded-xl border-4 border-foreground bg-secondary p-4 text-secondary-foreground">
           <p className="text-xl font-black">Shift closed. You declared {kes(result.counted)}.</p>
-          {"expected" in result && <p className="font-bold">Expected {kes(result.expected)} · Difference {kes(result.variance)}</p>}
+          {result.expected !== undefined && <p className="font-bold">Expected {kes(result.expected)} · Difference {kes(result.variance)}</p>}
         </div>
       )}
       {shift.isLoading ? <p className="mt-4">Loading…</p> : shift.data ? (

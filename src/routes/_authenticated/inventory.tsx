@@ -46,11 +46,11 @@ function Inventory() {
     e.preventDefault();
     const qty = Number(f.qty);
     const r = mode === "receive"
-      ? await supabase.rpc("receive_stock", { _branch: branch, _product: f.product, _qty: qty, _unit_cost: Number(f.cost), _reference: f.ref || null })
+      ? await supabase.rpc("receive_stock", { _branch: branch, _product: f.product, _qty: qty, _unit_cost: Number(f.cost), _reference: f.ref || undefined })
       : mode === "adjust"
         ? await supabase.rpc("adjust_stock", { _branch: branch, _product: f.product, _qty_delta: qty, _reason: f.ref })
         : await supabase.rpc("break_bulk", { _branch: branch, _child_product: f.product, _parent_qty: qty });
-    if (r.error) return toast.error(r.error.message);
+    if (r.error) { toast.error(r.error.message); return; }
     toast.success("Stock updated");
     setF({ product: "", qty: "", cost: "", ref: "" }); setMode(null); refresh();
   };

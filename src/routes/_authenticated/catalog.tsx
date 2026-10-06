@@ -74,7 +74,7 @@ function ProductForm({ businessId, parents, onDone }: { businessId: string; pare
       parent_product_id: f.parent || null, units_per_parent: f.parent ? Number(f.per) : null,
     });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Product added");
     onDone();
   };
