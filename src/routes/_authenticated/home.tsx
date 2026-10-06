@@ -54,7 +54,7 @@ function Home() {
           <li key={p} className="rounded-lg border-2 border-foreground bg-card px-3 py-2 font-semibold">{p}</li>
         ))}
       </ul>
-      <p className="mt-6 text-sm text-muted-foreground">Till, shifts and back office open in the next steps.</p>
+      <p className="mt-6 text-sm text-muted-foreground">Use the menu above: Till, Shift, Products, Stock and Sales.</p>
     </AppShell>
   );
 }
