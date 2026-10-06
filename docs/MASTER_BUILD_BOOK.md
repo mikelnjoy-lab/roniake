@@ -53,3 +53,13 @@ Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided s
 - Protected area gated by session; business list from RLS-scoped active memberships; single business auto-selected; branch list from RLS (`can_access_branch_row`).
 - Active context re-resolved server-side via `resolve_tenant_context` on every entry; rejection → /unauthorized and stored selection cleared. Browser stores only the chosen IDs, never permissions.
 - First-time users create a business through `create_business` (become Owner).
+
+## Application Assembly — Steps 2–7 (built, awaiting pilot testing) 🟡
+- Products screen (catalog, variable-weight PLU, pack-to-unit) — RLS insert via catalog.manage.
+- Stock screen: receive (WAC), audited adjustments, bulk break, movement history — existing RPCs.
+- Shifts: migration 0004 `phase2_shifts` (open_shift, close_shift, my_open_shift). Blind close: cashiers get only their declared amount; expected/variance returned only with shift.view_expected; shifts table SELECT limited to that permission.
+- Till: scan/SKU search, EAN-13 weight barcodes (2+PLU5+grams5), cart, permissioned discounts, cash / M-Pesa manual / card / other, split tender, hold/resume, post_sale.
+- Offline: single IndexedDB queue `ronia/pending_sales`, idempotent replay on client_txn_id, online indicator, auto-sync.
+- Receipts 58/80mm from server data only; eTIMS shown as "not submitted (eTIMS-ready, not KRA-certified)".
+- Sales screen: today's totals, tender split, gross profit (reports.view), receipt reprint.
+- Not yet built: Deni credit, refunds/voids, stock counts, staff invites, live M-Pesa STK, eTIMS submission, subscription.
