@@ -78,7 +78,7 @@ function Pos() {
       if (p) { add(p, Number(c.slice(6, 11)) / 1000); setQ(""); return; }
     }
     const matches = list.filter((p) => p.name.toLowerCase().includes(c.toLowerCase()));
-    if (matches.length === 1) { add(matches[0]); setQ(""); } else if (!matches.length) toast.error("No product matches " + c);
+    if (matches.length === 1) { add(matches[0]!); setQ(""); } else if (!matches.length) toast.error("No product matches " + c);
   };
   const results = q.length >= 2 ? (products.data ?? []).filter((p) => `${p.name} ${p.sku} ${p.barcode ?? ""}`.toLowerCase().includes(q.toLowerCase())).slice(0, 8) : [];
 
@@ -87,15 +87,15 @@ function Pos() {
     const next = [...held, { at: new Date().toISOString(), cart }];
     setHeld(next); localStorage.setItem(HOLD_KEY, JSON.stringify(next)); setCart([]); toast("Sale held");
   };
-  const resume = (i: number) => {
-    if (cart.length) return toast.error("Finish or hold the current sale first");
-    setCart(held[i].cart); const next = held.filter((_, j) => j !== i); setHeld(next); localStorage.setItem(HOLD_KEY, JSON.stringify(next));
+  const resume = (i: number): void => {
+    if (cart.length) { toast.error("Finish or hold the current sale first"); return; }
+    setCart(held[i]!.cart); const next = held.filter((_, j) => j !== i); setHeld(next); localStorage.setItem(HOLD_KEY, JSON.stringify(next));
   };
 
-  const complete = async () => {
-    if (paid + 0.001 < total) return toast.error("Payment is short by " + kes(total - paid));
-    if (nonCash > total + 0.001) return toast.error("Only cash can be more than the total");
-    for (const t of tenders) if (t.type === "mpesa_manual" && Number(t.amount) > 0 && !/^[A-Z0-9]{8,12}$/.test(t.reference.trim().toUpperCase())) return toast.error("Enter the M-Pesa code from the customer's message");
+  const complete = async (): Promise<void> => {
+    if (paid + 0.001 < total) { toast.error("Payment is short by " + kes(total - paid)); return; }
+    if (nonCash > total + 0.001) { toast.error("Only cash can be more than the total"); return; }
+    for (const t of tenders) if (t.type === "mpesa_manual" && Number(t.amount) > 0 && !/^[A-Z0-9]{8,12}$/.test(t.reference.trim().toUpperCase())) { toast.error("Enter the M-Pesa code from the customer's message"); return; }
     const payload = {
       client_txn_id: crypto.randomUUID(), branch_id: branch, device_id: deviceId(),
       lines: cart.map((l) => ({ product_id: l.p.id, qty: l.qty, discount: l.discount })),
@@ -193,7 +193,7 @@ function Pos() {
                   <div className="grid grid-cols-4 gap-1">
                     {(["cash", "mpesa_manual", "card", "other"] as const).map((k) => (
                       <Button key={k} size="sm" variant={t.type === k ? "default" : "outline"} className="h-11 font-black" onClick={() => setTenders(tenders.map((x, j) => j === i ? { ...x, type: k } : x))}>
-                        {k === "mpesa_manual" ? "M-Pesa" : k[0].toUpperCase() + k.slice(1)}
+                        {k === "mpesa_manual" ? "M-Pesa" : k.charAt(0).toUpperCase() + k.slice(1)}
                       </Button>))}
                   </div>
                   <Input type="number" step="0.01" min="0" value={t.amount} onChange={(e) => setTenders(tenders.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))} className="mt-2 h-12 text-xl" placeholder="Amount" />
