@@ -47,7 +47,7 @@ function Sales() {
   const canVoid = can(tenant.permissions, "sales.void");
 
   async function doVoid() {
-    if (!open || reason.trim().length < 3) return toast.error("Choose or type a reason");
+    if (!open || reason.trim().length < 3) { toast.error("Choose or type a reason"); return; }
     setBusy(true);
     const { error } = await supabase.rpc("void_sale", { _sale: open, _reason: reason.trim() });
     setBusy(false);
