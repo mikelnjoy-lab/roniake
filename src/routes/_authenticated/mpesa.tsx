@@ -103,7 +103,7 @@ function Mpesa() {
           {!configure && <p className="text-sm font-bold">View only — the owner sets these.</p>}
           <fieldset disabled={!configure} className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              {[["till", "Buy Goods Till"], ["paybill", "PayBill"]].map(([k, l]) => <Button key={k} type="button" size="lg" variant={f.kind === k ? "default" : "outline"} className="border-2 font-black" onClick={() => setF({ ...f, kind: k })}>{l}</Button>)}
+              {[["till", "Buy Goods Till"], ["paybill", "PayBill"]].map(([k, l]) => <Button key={k} type="button" size="lg" variant={f.kind === k ? "default" : "outline"} className="border-2 font-black" onClick={() => setF({ ...f, kind: k! })}>{l}</Button>)}
             </div>
             {f.kind === "till" ? (<>
               <label className="block font-bold">Store number<Input className="h-12 text-lg" inputMode="numeric" value={f.store} onChange={(e) => setF({ ...f, store: e.target.value })} /></label>
@@ -113,7 +113,7 @@ function Mpesa() {
               <label className="block font-bold">Account number format<Input className="h-12 text-lg" placeholder="e.g. receipt number" value={f.account} onChange={(e) => setF({ ...f, account: e.target.value })} /></label>
             </>)}
             <div className="grid grid-cols-2 gap-2">
-              {[["branch", "This branch only"], ["business", "All branches"]].map(([k, l]) => <Button key={k} type="button" variant={f.scope === k ? "default" : "outline"} className="border-2 font-bold" onClick={() => setF({ ...f, scope: k })}>{l}</Button>)}
+              {[["branch", "This branch only"], ["business", "All branches"]].map(([k, l]) => <Button key={k} type="button" variant={f.scope === k ? "default" : "outline"} className="border-2 font-bold" onClick={() => setF({ ...f, scope: k! })}>{l}</Button>)}
             </div>
             <label className="flex items-center gap-2 font-bold"><input type="checkbox" className="size-6" checked={f.status === "credentials_pending"} onChange={(e) => setF({ ...f, status: e.target.checked ? "credentials_pending" : "configured" })} />I've applied to Safaricom for Daraja API access</label>
             <Button size="lg" className="h-14 w-full text-lg font-black" onClick={save}>Save M-Pesa details</Button>

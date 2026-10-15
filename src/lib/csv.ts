@@ -1,7 +1,7 @@
 // Builds a CSV file in the browser from rows the user is already allowed to read.
 export function downloadCsv(name: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return false;
-  const cols = Object.keys(rows[0]);
+  const cols = Object.keys(rows[0]!);
   const esc = (v: unknown) => {
     const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
