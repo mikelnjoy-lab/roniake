@@ -440,6 +440,108 @@ export type Database = {
           },
         ]
       }
+      mpesa_configs: {
+        Row: {
+          account_format: string | null
+          branch_id: string | null
+          business_id: string
+          id: string
+          kind: string
+          shortcode: string | null
+          status: string
+          store_number: string | null
+          till_number: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_format?: string | null
+          branch_id?: string | null
+          business_id: string
+          id?: string
+          kind: string
+          shortcode?: string | null
+          status?: string
+          store_number?: string | null
+          till_number?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_format?: string | null
+          branch_id?: string | null
+          business_id?: string
+          id?: string
+          kind?: string
+          shortcode?: string | null
+          status?: string
+          store_number?: string | null
+          till_number?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mpesa_configs_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_configs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mpesa_reconciliations: {
+        Row: {
+          actor_user_id: string
+          business_id: string
+          created_at: string
+          id: number
+          note: string | null
+          sale_tender_id: number
+          status: string
+        }
+        Insert: {
+          actor_user_id: string
+          business_id: string
+          created_at?: string
+          id?: never
+          note?: string | null
+          sale_tender_id: number
+          status: string
+        }
+        Update: {
+          actor_user_id?: string
+          business_id?: string
+          created_at?: string
+          id?: never
+          note?: string | null
+          sale_tender_id?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mpesa_reconciliations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mpesa_reconciliations_sale_tender_id_fkey"
+            columns: ["sale_tender_id"]
+            isOneToOne: false
+            referencedRelation: "sale_tenders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -1246,6 +1348,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reconcile_mpesa: {
+        Args: { _note: string; _status: string; _tender: number }
+        Returns: undefined
+      }
       record_deni_repayment: {
         Args: {
           _amount: number
@@ -1258,6 +1364,19 @@ export type Database = {
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }
         Returns: Json
+      }
+      save_mpesa_config: {
+        Args: {
+          _account_format: string
+          _branch: string
+          _business: string
+          _kind: string
+          _shortcode: string
+          _status: string
+          _store: string
+          _till: string
+        }
+        Returns: string
       }
       void_sale: { Args: { _reason: string; _sale: string }; Returns: Json }
       write_audit: {
