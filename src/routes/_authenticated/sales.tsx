@@ -51,7 +51,7 @@ function Sales() {
     setBusy(true);
     const { error } = await supabase.rpc("void_sale", { _sale: open, _reason: reason.trim() });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Sale voided — stock returned to shelf");
     setVoiding(false); setReason("");
     qc.invalidateQueries({ queryKey: ["sales", branch] });
