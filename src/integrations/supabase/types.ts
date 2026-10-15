@@ -713,6 +713,55 @@ export type Database = {
           },
         ]
       }
+      sale_voids: {
+        Row: {
+          branch_id: string
+          business_id: string
+          reason: string
+          sale_id: string
+          voided_at: string
+          voided_by: string
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          reason: string
+          sale_id: string
+          voided_at?: string
+          voided_by: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          reason?: string
+          sale_id?: string
+          voided_at?: string
+          voided_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_voids_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_voids_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_voids_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           branch_id: string
@@ -1210,6 +1259,7 @@ export type Database = {
         Args: { _branch?: string; _business: string }
         Returns: Json
       }
+      void_sale: { Args: { _reason: string; _sale: string }; Returns: Json }
       write_audit: {
         Args: {
           _action: string

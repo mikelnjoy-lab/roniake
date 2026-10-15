@@ -88,7 +88,7 @@ function Customers() {
                 )}
                 <ul className="space-y-1 text-sm">{(ledger.data ?? []).map((l) => (
                   <li key={l.id} className="rounded-md border border-border px-2 py-1">
-                    {new Date(l.created_at).toLocaleString()} · {l.entry_type === "credit_sale" ? `Deni sale ${l.reference ?? ""}` : `Repayment (${l.tender_type})`} · <b>{Number(l.amount) > 0 ? "+" : ""}{kes(l.amount)}</b> → {kes(l.balance_after)}
+                    {new Date(l.created_at).toLocaleString()} · {l.entry_type === "credit_sale" ? `Deni sale ${l.reference ?? ""}` : l.entry_type === "void_reversal" ? `Voided sale ${l.reference ?? ""}` : `Repayment (${l.tender_type})`} · <b>{Number(l.amount) > 0 ? "+" : ""}{kes(l.amount)}</b> → {kes(l.balance_after)}
                   </li>))}
                   {ledger.data?.length === 0 && <li>No Deni history yet.</li>}
                 </ul>
