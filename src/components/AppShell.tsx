@@ -37,6 +37,8 @@ const NAV = [
   { to: "/inventory", label: "Stock" },
   { to: "/sales", label: "Sales" },
   { to: "/customers", label: "Deni" },
+  { to: "/mpesa", label: "M-Pesa" },
+  { to: "/dashboard", label: "Reports" },
   { to: "/staff", label: "Staff" },
 ] as const;
 

@@ -16,8 +16,10 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
+import { Route as AuthenticatedMpesaRouteImport } from './routes/_authenticated/mpesa'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedSelectRouteImport } from './routes/_authenticated/select'
@@ -58,6 +60,11 @@ const AuthenticatedCustomersRoute = AuthenticatedCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -66,6 +73,11 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
 const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMpesaRoute = AuthenticatedMpesaRouteImport.update({
+  id: '/mpesa',
+  path: '/mpesa',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
@@ -101,8 +113,10 @@ export interface FileRoutesByFullPath {
   '/unauthorized': typeof UnauthorizedRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/mpesa': typeof AuthenticatedMpesaRoute
   '/pos': typeof AuthenticatedPosRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
@@ -116,8 +130,10 @@ export interface FileRoutesByTo {
   '/unauthorized': typeof UnauthorizedRoute
   '/catalog': typeof AuthenticatedCatalogRoute
   '/customers': typeof AuthenticatedCustomersRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
+  '/mpesa': typeof AuthenticatedMpesaRoute
   '/pos': typeof AuthenticatedPosRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
@@ -133,8 +149,10 @@ export interface FileRoutesById {
   '/unauthorized': typeof UnauthorizedRoute
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
+  '/_authenticated/mpesa': typeof AuthenticatedMpesaRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/select': typeof AuthenticatedSelectRoute
@@ -150,8 +168,10 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/catalog'
     | '/customers'
+    | '/dashboard'
     | '/home'
     | '/inventory'
+    | '/mpesa'
     | '/pos'
     | '/sales'
     | '/select'
@@ -165,8 +185,10 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/catalog'
     | '/customers'
+    | '/dashboard'
     | '/home'
     | '/inventory'
+    | '/mpesa'
     | '/pos'
     | '/sales'
     | '/select'
@@ -181,8 +203,10 @@ export interface FileRouteTypes {
     | '/unauthorized'
     | '/_authenticated/catalog'
     | '/_authenticated/customers'
+    | '/_authenticated/dashboard'
     | '/_authenticated/home'
     | '/_authenticated/inventory'
+    | '/_authenticated/mpesa'
     | '/_authenticated/pos'
     | '/_authenticated/sales'
     | '/_authenticated/select'
@@ -249,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCustomersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -261,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof AuthenticatedInventoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mpesa': {
+      id: '/_authenticated/mpesa'
+      path: '/mpesa'
+      fullPath: '/mpesa'
+      preLoaderRoute: typeof AuthenticatedMpesaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos': {
@@ -304,8 +342,10 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
+  AuthenticatedMpesaRoute: typeof AuthenticatedMpesaRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSelectRoute: typeof AuthenticatedSelectRoute
@@ -316,8 +356,10 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
+  AuthenticatedMpesaRoute: AuthenticatedMpesaRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSelectRoute: AuthenticatedSelectRoute,
