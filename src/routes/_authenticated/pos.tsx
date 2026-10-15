@@ -17,9 +17,9 @@ export const Route = createFileRoute("/_authenticated/pos")({
   component: Pos,
 });
 
-type Product = { id: string; name: string; sku: string; barcode: string | null; selling_price: number; is_weighted: boolean; plu_code: string | null; unit: string; is_active: boolean };
+type Product = { id: string; name: string; sku: string; barcode: string | null; selling_price: number; is_weighted: boolean; plu_code: string | null; unit: string; is_active: boolean; track_stock: boolean };
 type Line = { p: Product; qty: number; discount: number };
-type Tender = { type: "cash" | "mpesa_manual" | "card" | "other"; amount: string; reference: string };
+type Tender = { type: "cash" | "mpesa_manual" | "card" | "other" | "deni"; amount: string; reference: string };
 const HOLD_KEY = "ronia.held-carts";
 
 function Pos() {
@@ -33,6 +33,16 @@ function Pos() {
     queryKey: ["products", tenant.business_id],
     queryFn: async () => (await supabase.from("products").select("*").eq("business_id", tenant.business_id).eq("is_active", true).order("name")).data as Product[] ?? [],
   });
+  const stock = useQuery({
+    queryKey: ["stock-levels", branch],
+    queryFn: async () => { const { data, error } = await supabase.rpc("branch_stock_levels", { _branch: branch }); if (error) throw error; return new Map((data ?? []).map((r) => [r.product_id, Number(r.qty_on_hand)])); },
+  });
+  const customers = useQuery({
+    queryKey: ["customers", tenant.business_id],
+    queryFn: async () => (await supabase.from("customers").select("id,name,phone,credit_enabled,credit_limit,balance").eq("business_id", tenant.business_id).order("name")).data ?? [],
+  });
+  const [customerId, setCustomerId] = useState<string>("");
+  const customer = customers.data?.find((c) => c.id === customerId);
   const [cart, setCart] = useState<Line[]>([]);
   const [q, setQ] = useState("");
   const [paying, setPaying] = useState(false);
@@ -55,7 +65,10 @@ function Pos() {
   const paid = tenders.reduce((a, t) => a + Number(t.amount || 0), 0);
   const nonCash = tenders.filter((t) => t.type !== "cash").reduce((a, t) => a + Number(t.amount || 0), 0);
 
+  const onHand = (p: Product & { track_stock?: boolean }) => (p.track_stock === false ? Infinity : stock.data?.get(p.id) ?? 0);
+  const inCart = (id: string, c: Line[] = cart) => c.filter((l) => l.p.id === id).reduce((a, l) => a + l.qty, 0);
   const add = (p: Product, qty = 1) => setCart((c) => {
+    if (inCart(p.id, c) + qty > onHand(p) + 1e-9) { toast.error(`${p.name}: only ${onHand(p)} in stock`); return c; }
     const i = c.findIndex((l) => l.p.id === p.id && !p.is_weighted);
     if (i >= 0) return c.map((l, j) => (j === i ? { ...l, qty: l.qty + qty } : l));
     return [...c, { p, qty, discount: 0 }];
@@ -95,9 +108,16 @@ function Pos() {
   const complete = async (): Promise<void> => {
     if (paid + 0.001 < total) { toast.error("Payment is short by " + kes(total - paid)); return; }
     if (nonCash > total + 0.001) { toast.error("Only cash can be more than the total"); return; }
+    const deni = tenders.filter((t) => t.type === "deni").reduce((a, t) => a + Number(t.amount || 0), 0);
+    if (deni > 0) {
+      if (!customer) { toast.error("Choose the customer for Deni"); return; }
+      if (!customer.credit_enabled) { toast.error(`Deni is not enabled for ${customer.name}`); return; }
+      if (Number(customer.balance) + deni > Number(customer.credit_limit)) { toast.error(`Deni limit reached: owes ${kes(customer.balance)} of ${kes(customer.credit_limit)}`); return; }
+      if (!online) { toast.error("Deni sales need a connection"); return; }
+    }
     for (const t of tenders) if (t.type === "mpesa_manual" && Number(t.amount) > 0 && !/^[A-Z0-9]{8,12}$/.test(t.reference.trim().toUpperCase())) { toast.error("Enter the M-Pesa code from the customer's message"); return; }
     const payload = {
-      client_txn_id: crypto.randomUUID(), branch_id: branch, device_id: deviceId(),
+      client_txn_id: crypto.randomUUID(), branch_id: branch, device_id: deviceId(), customer_id: customerId || null,
       lines: cart.map((l) => ({ product_id: l.p.id, qty: l.qty, discount: l.discount })),
       tenders: tenders.filter((t) => Number(t.amount) > 0).map((t) => ({ type: t.type, amount: Number(t.amount), reference: t.reference.trim().toUpperCase() || null })),
     };
@@ -105,7 +125,7 @@ function Pos() {
     try {
       const r = await submitSale(payload);
       setDone({ saleId: r.sale_id, change: r.change_given });
-      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: ["sales"] }); qc.invalidateQueries({ queryKey: ["stock-levels"] }); qc.invalidateQueries({ queryKey: ["customers"] });
     } catch (e) {
       if (isNetworkError(e)) {
         await putPending({ ...payload, state: "pending", created_at: new Date().toISOString() });
@@ -114,7 +134,7 @@ function Pos() {
       } else toast.error((e as Error).message);
     } finally { setBusy(false); }
   };
-  const next = () => { setCart([]); setTenders([{ type: "cash", amount: "", reference: "" }]); setPaying(false); setDone(null); setTimeout(() => scanRef.current?.focus(), 50); };
+  const next = () => { setCart([]); setCustomerId(""); setTenders([{ type: "cash", amount: "", reference: "" }]); setPaying(false); setDone(null); setTimeout(() => scanRef.current?.focus(), 50); };
   const receipt = useQuery({ queryKey: ["receipt", done?.saleId], enabled: !!done?.saleId, queryFn: () => loadReceipt(supabase, done!.saleId!) });
 
   if (!shift.isLoading && !shift.data) return (
@@ -154,6 +174,7 @@ function Pos() {
               {results.map((p) => (
                 <button key={p.id} onClick={() => { scan(p.sku); }} className="rounded-xl border-2 border-foreground bg-card p-3 text-left active:bg-secondary">
                   <p className="font-black">{p.name}</p><p className="text-sm">{kes(p.selling_price)}{p.is_weighted ? ` / ${p.unit}` : ""}</p>
+                  <p className={`text-sm font-black ${onHand(p) <= 0 ? "text-destructive" : ""}`}>{onHand(p) === Infinity ? "" : onHand(p) <= 0 ? "Out of stock" : `${onHand(p)} in stock`}</p>
                 </button>
               ))}
             </div>
@@ -171,7 +192,7 @@ function Pos() {
                 <div className="mt-1 flex items-center gap-2">
                   {!l.p.is_weighted && <Button size="lg" variant="outline" className="h-11 w-11 border-2 text-xl font-black" onClick={() => setCart(cart.map((x, j) => j === i ? { ...x, qty: Math.max(1, x.qty - 1) } : x))}>−</Button>}
                   <span className="min-w-12 text-center text-lg font-black">{l.qty}{l.p.is_weighted ? ` ${l.p.unit}` : ""}</span>
-                  {!l.p.is_weighted && <Button size="lg" variant="outline" className="h-11 w-11 border-2 text-xl font-black" onClick={() => setCart(cart.map((x, j) => j === i ? { ...x, qty: x.qty + 1 } : x))}>+</Button>}
+                  {!l.p.is_weighted && <Button size="lg" variant="outline" className="h-11 w-11 border-2 text-xl font-black" onClick={() => { if (inCart(l.p.id) + 1 > onHand(l.p)) { toast.error(`${l.p.name}: only ${onHand(l.p)} in stock`); return; } setCart(cart.map((x, j) => j === i ? { ...x, qty: x.qty + 1 } : x)); }}>+</Button>}
                   {discountOk && <Input type="number" min="0" step="0.01" placeholder="Disc." value={l.discount || ""} onChange={(e) => setCart(cart.map((x, j) => j === i ? { ...x, discount: Number(e.target.value) || 0 } : x))} className="h-11 w-24" />}
                   <Button variant="destructive" className="ml-auto h-11" onClick={() => setCart(cart.filter((_, j) => j !== i))}>Remove</Button>
                 </div>
@@ -188,12 +209,16 @@ function Pos() {
             </div>
           ) : (
             <div className="mt-3 space-y-2">
+              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="h-12 w-full rounded-md border-2 border-foreground bg-background px-3 text-lg font-bold">
+                <option value="">No customer (walk-in)</option>
+                {(customers.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}{c.phone ? ` · ${c.phone}` : ""}{c.credit_enabled ? ` · owes ${kes(c.balance)} / ${kes(c.credit_limit)}` : ""}</option>)}
+              </select>
               {tenders.map((t, i) => (
                 <div key={i} className="rounded-lg border-2 border-foreground p-2">
-                  <div className="grid grid-cols-4 gap-1">
-                    {(["cash", "mpesa_manual", "card", "other"] as const).map((k) => (
+                  <div className="grid grid-cols-5 gap-1">
+                    {(["cash", "mpesa_manual", "card", "other", "deni"] as const).map((k) => (
                       <Button key={k} size="sm" variant={t.type === k ? "default" : "outline"} className="h-11 font-black" onClick={() => setTenders(tenders.map((x, j) => j === i ? { ...x, type: k } : x))}>
-                        {k === "mpesa_manual" ? "M-Pesa" : k.charAt(0).toUpperCase() + k.slice(1)}
+                        {k === "mpesa_manual" ? "M-Pesa" : k === "deni" ? "Deni" : k.charAt(0).toUpperCase() + k.slice(1)}
                       </Button>))}
                   </div>
                   <Input type="number" step="0.01" min="0" value={t.amount} onChange={(e) => setTenders(tenders.map((x, j) => j === i ? { ...x, amount: e.target.value } : x))} className="mt-2 h-12 text-xl" placeholder="Amount" />

@@ -63,3 +63,9 @@ Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided s
 - Receipts 58/80mm from server data only; eTIMS shown as "not submitted (eTIMS-ready, not KRA-certified)".
 - Sales screen: today's totals, tender split, gross profit (reports.view), receipt reprint.
 - Not yet built: Deni credit, refunds/voids, stock counts, staff invites, live M-Pesa STK, eTIMS submission, subscription.
+
+## Step 8 — Stock guard, Deni, Staff, Stock counts — 🟡 IN PROGRESS (built; DB checks for these not yet re-run)
+- Owner decision (2026-10-07): **sales must not go below zero stock.** `post_sale` locks stock rows and rejects with OUT_OF_STOCK; the till shows stock and blocks adding beyond it. Offline-queued sales that no longer fit stock are marked failed on sync. Supersedes the Phase 1 "negative stock allowed" note.
+- Customers & Deni (migration 0005): customers (default Deni off, limit), immutable customer_ledger, Deni tender with limit check in `post_sale`, `record_deni_repayment`.
+- Staff: `invite_member_by_email` (existing account required), `list_members`, suspend/reactivate.
+- Stock counts: `apply_stock_count` records count + lines (immutable) and adjusts variances.

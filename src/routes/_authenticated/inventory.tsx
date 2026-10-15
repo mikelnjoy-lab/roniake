@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/inventory")({
   component: Inventory,
 });
 
-type Mode = "receive" | "adjust" | "break";
+type Mode = "receive" | "adjust" | "break" | "count";
 
 function Inventory() {
   const { tenant } = Route.useRouteContext();
@@ -38,6 +38,7 @@ function Inventory() {
   });
   const [mode, setMode] = useState<Mode | null>(null);
   const [f, setF] = useState({ product: "", qty: "", cost: "", ref: "" });
+  const [counts, setCounts] = useState<Record<string, string>>({});
   const refresh = () => qc.invalidateQueries({ queryKey: ["stock"] });
 
   if (!allowed) return <AppShell><p className="text-xl font-bold">Your role can't view stock.</p></AppShell>;
@@ -54,6 +55,16 @@ function Inventory() {
     toast.success("Stock updated");
     setF({ product: "", qty: "", cost: "", ref: "" }); setMode(null); refresh();
   };
+  const submitCount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const lines = Object.entries(counts).filter(([, v]) => v !== "").map(([product_id, v]) => ({ product_id, counted: Number(v) }));
+    if (!lines.length) { toast.error("Enter at least one count"); return; }
+    const r = await supabase.rpc("apply_stock_count", { _branch: branch, _lines: lines as never, ...(f.ref ? { _note: f.ref } : {}) });
+    if (r.error) { toast.error(r.error.message); return; }
+    const d = r.data as { lines: number; adjusted: number };
+    toast.success(`Counted ${d.lines} items, corrected ${d.adjusted}`);
+    setCounts({}); setF({ product: "", qty: "", cost: "", ref: "" }); setMode(null); refresh();
+  };
   const products = data.data?.products ?? [];
   const pickable = mode === "break" ? products.filter((p) => p.parent_product_id) : products.filter((p) => p.track_stock);
   const name = (id: string) => products.find((p) => p.id === id)?.name ?? id;
@@ -63,14 +74,26 @@ function Inventory() {
       <h1 className="text-3xl font-black">Stock</h1>
       {manage && (
         <div className="mt-3 flex flex-wrap gap-2">
-          {(["receive", "adjust", "break"] as Mode[]).map((m) => (
+          {(["receive", "adjust", "break", "count"] as Mode[]).map((m) => (
             <Button key={m} size="lg" variant={mode === m ? "default" : "outline"} className="h-12 border-2 text-lg font-black" onClick={() => setMode(mode === m ? null : m)}>
-              {m === "receive" ? "Receive delivery" : m === "adjust" ? "Adjust stock" : "Break a pack"}
+              {m === "receive" ? "Receive delivery" : m === "adjust" ? "Adjust stock" : m === "break" ? "Break a pack" : "Stock count"}
             </Button>
           ))}
         </div>
       )}
-      {mode && (
+      {mode === "count" && (
+        <form onSubmit={submitCount} className="mt-3 rounded-xl border-4 border-foreground bg-card p-4">
+          <p className="font-bold">Type what you physically counted. Leave blank to skip an item. Differences are corrected and recorded.</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">{products.filter((p) => p.track_stock).map((p) => (
+            <label key={p.id} className="flex items-center justify-between gap-2 rounded-lg border-2 border-border p-2">
+              <span className="font-bold">{p.name}<span className="block text-sm font-normal">System: {Number(data.data?.stock.get(p.id)?.qty_on_hand ?? 0)} {p.unit}</span></span>
+              <Input type="number" step="0.001" min="0" value={counts[p.id] ?? ""} onChange={(e) => setCounts({ ...counts, [p.id]: e.target.value })} className="h-12 w-28 text-lg" />
+            </label>))}</div>
+          <Input placeholder="Note (optional)" value={f.ref} onChange={(e) => setF({ ...f, ref: e.target.value })} className="mt-2 h-12 text-lg" />
+          <Button size="lg" className="mt-3 h-14 w-full text-lg font-black">Save count</Button>
+        </form>
+      )}
+      {mode && mode !== "count" && (
         <form onSubmit={submit} className="mt-3 grid gap-3 rounded-xl border-4 border-foreground bg-card p-4 sm:grid-cols-2">
           <div className="sm:col-span-2"><Label>{mode === "break" ? "Single item to fill" : "Product"}</Label>
             <select required value={f.product} onChange={(e) => setF({ ...f, product: e.target.value })} className="h-12 w-full rounded-md border-2 border-input bg-background px-3 text-lg">

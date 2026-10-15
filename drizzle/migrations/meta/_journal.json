@@ -36,6 +36,20 @@
       "when": 1791172633870,
       "tag": "0004_phase2_shifts",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792103652154,
+      "tag": "0005_phase3_stock_guard_deni_staff_counts",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792103669036,
+      "tag": "0006_stock_count_header_totals",
+      "breakpoints": true
     }
   ]
 }

@@ -261,6 +261,114 @@ export type Database = {
           },
         ]
       }
+      customer_ledger: {
+        Row: {
+          actor_user_id: string | null
+          amount: number
+          balance_after: number
+          business_id: string
+          created_at: string
+          customer_id: string
+          entry_type: string
+          id: number
+          reference: string | null
+          sale_id: string | null
+          tender_type: Database["public"]["Enums"]["tender_type"] | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          amount: number
+          balance_after: number
+          business_id: string
+          created_at?: string
+          customer_id: string
+          entry_type: string
+          id?: never
+          reference?: string | null
+          sale_id?: string | null
+          tender_type?: Database["public"]["Enums"]["tender_type"] | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          amount?: number
+          balance_after?: number
+          business_id?: string
+          created_at?: string
+          customer_id?: string
+          entry_type?: string
+          id?: never
+          reference?: string | null
+          sale_id?: string | null
+          tender_type?: Database["public"]["Enums"]["tender_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_ledger_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_ledger_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_ledger_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          balance: number
+          business_id: string
+          created_at: string
+          created_by: string | null
+          credit_enabled: boolean
+          credit_limit: number
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          balance?: number
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_enabled?: boolean
+          credit_limit?: number
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          balance?: number
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_enabled?: boolean
+          credit_limit?: number
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idempotency_keys: {
         Row: {
           actor_user_id: string
@@ -614,6 +722,7 @@ export type Database = {
           client_txn_id: string
           cogs_total: number
           created_at: string
+          customer_id: string | null
           device_id: string | null
           discount_total: number
           id: string
@@ -633,6 +742,7 @@ export type Database = {
           client_txn_id: string
           cogs_total: number
           created_at?: string
+          customer_id?: string | null
           device_id?: string | null
           discount_total: number
           id?: string
@@ -652,6 +762,7 @@ export type Database = {
           client_txn_id?: string
           cogs_total?: number
           created_at?: string
+          customer_id?: string | null
           device_id?: string | null
           discount_total?: number
           id?: string
@@ -676,6 +787,13 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -730,6 +848,109 @@ export type Database = {
           },
           {
             foreignKeyName: "shifts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_count_lines: {
+        Row: {
+          business_id: string
+          count_id: string
+          counted_qty: number
+          id: number
+          product_id: string
+          system_qty: number
+          unit_cost: number
+          variance: number
+        }
+        Insert: {
+          business_id: string
+          count_id: string
+          counted_qty: number
+          id?: never
+          product_id: string
+          system_qty: number
+          unit_cost: number
+          variance: number
+        }
+        Update: {
+          business_id?: string
+          count_id?: string
+          counted_qty?: number
+          id?: never
+          product_id?: string
+          system_qty?: number
+          unit_cost?: number
+          variance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_count_lines_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_count_id_fkey"
+            columns: ["count_id"]
+            isOneToOne: false
+            referencedRelation: "stock_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_count_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_counts: {
+        Row: {
+          actor_user_id: string | null
+          branch_id: string
+          business_id: string
+          created_at: string
+          id: string
+          lines_adjusted: number
+          lines_counted: number
+          note: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          branch_id: string
+          business_id: string
+          created_at?: string
+          id?: string
+          lines_adjusted: number
+          lines_counted: number
+          note?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          branch_id?: string
+          business_id?: string
+          created_at?: string
+          id?: string
+          lines_adjusted?: number
+          lines_counted?: number
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_counts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_counts_business_id_fkey"
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
@@ -833,6 +1054,10 @@ export type Database = {
         }
         Returns: Json
       }
+      apply_stock_count: {
+        Args: { _branch: string; _lines: Json; _note?: string }
+        Returns: Json
+      }
       apply_stock_movement: {
         Args: {
           _branch: string
@@ -850,6 +1075,13 @@ export type Database = {
       branch_business_checked: {
         Args: { _branch: string; _permission: string }
         Returns: string
+      }
+      branch_stock_levels: {
+        Args: { _branch: string }
+        Returns: {
+          product_id: string
+          qty_on_hand: number
+        }[]
       }
       break_bulk: {
         Args: { _branch: string; _child_product: string; _parent_qty: number }
@@ -887,7 +1119,29 @@ export type Database = {
         Args: { _business: string; _permission: string }
         Returns: boolean
       }
+      invite_member_by_email: {
+        Args: {
+          _all_branches?: boolean
+          _branch_ids?: string[]
+          _business: string
+          _email: string
+          _role: Database["public"]["Enums"]["business_role"]
+        }
+        Returns: string
+      }
       is_business_member: { Args: { _business: string }; Returns: boolean }
+      list_members: {
+        Args: { _business: string }
+        Returns: {
+          all_branches: boolean
+          branch_names: string[]
+          email: string
+          membership_id: string
+          role: Database["public"]["Enums"]["business_role"]
+          status: Database["public"]["Enums"]["membership_status"]
+          user_id: string
+        }[]
+      }
       member_role: {
         Args: { _business: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -898,6 +1152,7 @@ export type Database = {
         Args: {
           _branch: string
           _client_txn_id: string
+          _customer?: string
           _device_id?: string
           _lines: Json
           _tenders: Json
@@ -942,6 +1197,15 @@ export type Database = {
         }
         Returns: Json
       }
+      record_deni_repayment: {
+        Args: {
+          _amount: number
+          _customer: string
+          _reference?: string
+          _type: Database["public"]["Enums"]["tender_type"]
+        }
+        Returns: Json
+      }
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }
         Returns: Json
@@ -969,7 +1233,7 @@ export type Database = {
         | "adjustment"
         | "break_out"
         | "break_in"
-      tender_type: "cash" | "mpesa_manual" | "card" | "other"
+      tender_type: "cash" | "mpesa_manual" | "card" | "other" | "deni"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1107,7 +1371,7 @@ export const Constants = {
         "break_out",
         "break_in",
       ],
-      tender_type: ["cash", "mpesa_manual", "card", "other"],
+      tender_type: ["cash", "mpesa_manual", "card", "other", "deni"],
     },
   },
 } as const
