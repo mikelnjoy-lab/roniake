@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/pos")({
   component: Pos,
 });
 
-type Product = { id: string; name: string; sku: string; barcode: string | null; selling_price: number; is_weighted: boolean; plu_code: string | null; unit: string; is_active: boolean };
+type Product = { id: string; name: string; sku: string; barcode: string | null; selling_price: number; is_weighted: boolean; plu_code: string | null; unit: string; is_active: boolean; track_stock: boolean };
 type Line = { p: Product; qty: number; discount: number };
 type Tender = { type: "cash" | "mpesa_manual" | "card" | "other" | "deni"; amount: string; reference: string };
 const HOLD_KEY = "ronia.held-carts";
