@@ -8,6 +8,7 @@ export type PendingSale = {
   lines: { product_id: string; qty: number; discount: number }[];
   tenders: { type: string; amount: number; reference?: string | null }[];
   device_id: string;
+  customer_id?: string | null;
   created_at: string;
   state: "pending" | "failed";
   error?: string;
@@ -51,6 +52,7 @@ export async function submitSale(p: Omit<PendingSale, "state" | "created_at">) {
   const { data, error } = await supabase.rpc("post_sale", {
     _branch: p.branch_id, _client_txn_id: p.client_txn_id,
     _lines: p.lines as never, _tenders: p.tenders as never, _device_id: p.device_id,
+    ...(p.customer_id ? { _customer: p.customer_id } : {}),
   });
   if (error) throw error;
   return data as { status: string; sale_id: string; receipt_no: string; total: number; change_given: number };
