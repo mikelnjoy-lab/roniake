@@ -85,6 +85,13 @@
       "when": 1792124549696,
       "tag": "0011_harden_stock_count_and_mpesa_reconcile",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792124815904,
+      "tag": "0012_suppliers_and_invoice_receiving",
+      "breakpoints": true
     }
   ]
 }
