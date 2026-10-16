@@ -71,6 +71,13 @@
       "when": 1792122342214,
       "tag": "0009_etims_subscription_support",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792124263539,
+      "tag": "0010_shift_cash_payouts",
+      "breakpoints": true
     }
   ]
 }

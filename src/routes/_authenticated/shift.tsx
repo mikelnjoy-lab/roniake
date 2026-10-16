@@ -63,6 +63,7 @@ function Shift() {
         <div className="mt-4 rounded-xl border-4 border-foreground bg-card p-4">
           <p className="text-lg font-bold">Open since {new Date(shift.data.opened_at).toLocaleString()}</p>
           <p>Opening float: {kes(shift.data.opening_float)}</p>
+          <Payouts shiftId={shift.data.id} />
           <h2 className="mt-4 text-xl font-black">Close shift — count your cash</h2>
           <p className="text-sm text-muted-foreground">Count the drawer and enter the total. The expected amount is not shown to cashiers.</p>
           <Input type="number" step="0.01" min="0" value={amt} onChange={(e) => setAmt(e.target.value)} placeholder="Cash counted" className="mt-2 h-14 text-2xl" />
@@ -86,5 +87,60 @@ function Shift() {
         </>
       )}
     </AppShell>
+  );
+}
+
+const CATS = [
+  ["supplies", "Supplies"], ["transport", "Transport"], ["cleaning", "Cleaning"],
+  ["staff_meal", "Staff meal"], ["supplier_payment", "Supplier payment"], ["other", "Other"],
+] as const;
+
+function Payouts({ shiftId }: { shiftId: string }) {
+  const qc = useQueryClient();
+  const list = useQuery({
+    queryKey: ["payouts", shiftId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("shift_payouts").select("id, amount, category, reason, created_at").eq("shift_id", shiftId).order("created_at");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const [amount, setAmount] = useState("");
+  const [cat, setCat] = useState<string>("supplies");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const save = async () => {
+    const a = Number(amount);
+    if (!(a > 0)) { toast.error("Enter the amount taken out"); return; }
+    if (reason.trim().length < 3) { toast.error("Say what the cash was for"); return; }
+    setBusy(true);
+    const { error } = await supabase.rpc("record_shift_payout", { _shift: shiftId, _amount: a, _category: cat, _reason: reason.trim() });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setAmount(""); setReason(""); toast.success("Cash out recorded");
+    qc.invalidateQueries({ queryKey: ["payouts", shiftId] });
+  };
+  const total = (list.data ?? []).reduce((s, p) => s + Number(p.amount), 0);
+  return (
+    <div className="mt-4 rounded-xl border-2 border-border p-3">
+      <h2 className="text-xl font-black">Cash taken out of the drawer</h2>
+      <p className="text-sm text-muted-foreground">Record every shilling paid out (petty cash) so your shift balances. It cannot be changed later.</p>
+      <div className="mt-2 grid grid-cols-3 gap-2">{CATS.map(([v, l]) => (
+        <Button key={v} type="button" variant={cat === v ? "default" : "outline"} onClick={() => setCat(v)} className="h-12 font-bold">{l}</Button>
+      ))}</div>
+      <Input type="number" step="0.01" min="0" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount (KES)" className="mt-2 h-12 text-xl" />
+      <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="What was it for?" maxLength={200} className="mt-2 h-12" />
+      <Button size="lg" onClick={save} disabled={busy} className="mt-2 h-12 w-full font-black">Record cash out</Button>
+      {(list.data ?? []).length > 0 && (
+        <ul className="mt-3 space-y-1">
+          {(list.data ?? []).map((p) => (
+            <li key={p.id} className="flex justify-between rounded-lg bg-muted px-3 py-2 text-sm">
+              <span>{CATS.find((c) => c[0] === p.category)?.[1]} — {p.reason}</span><b>{kes(p.amount)}</b>
+            </li>
+          ))}
+          <li className="flex justify-between px-3 text-sm font-black"><span>Total taken out</span><span>{kes(total)}</span></li>
+        </ul>
+      )}
+    </div>
   );
 }

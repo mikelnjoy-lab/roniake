@@ -1064,6 +1064,64 @@ export type Database = {
           },
         ]
       }
+      shift_payouts: {
+        Row: {
+          actor_user_id: string
+          amount: number
+          branch_id: string
+          business_id: string
+          category: string
+          created_at: string
+          id: number
+          reason: string
+          shift_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          amount: number
+          branch_id: string
+          business_id: string
+          category: string
+          created_at?: string
+          id?: never
+          reason: string
+          shift_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          amount?: number
+          branch_id?: string
+          business_id?: string
+          category?: string
+          created_at?: string
+          id?: never
+          reason?: string
+          shift_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_payouts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_payouts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_payouts_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shifts: {
         Row: {
           branch_id: string
@@ -1569,6 +1627,15 @@ export type Database = {
           _type: Database["public"]["Enums"]["tender_type"]
         }
         Returns: Json
+      }
+      record_shift_payout: {
+        Args: {
+          _amount: number
+          _category: string
+          _reason: string
+          _shift: string
+        }
+        Returns: number
       }
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }

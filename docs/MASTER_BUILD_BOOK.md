@@ -105,3 +105,52 @@ Real store integrity (read-only): stock vs ledger mismatches 0, negative stock 0
 - Offline sales refused on reconnect (e.g. stock ran out meanwhile) need a manager to act; goods may have left unrecorded.
 - No automated browser tests; screen-level behaviour verified only by pilot use.
 - Stock counts and M-Pesa reconciliation business rules not yet covered by DB tests.
+
+---
+
+## Requirement Reconciliation Matrix (full scope review)
+
+Status key: VERIFIED (passing automated test) · IMPLEMENTED, NOT VERIFIED · PARTIAL · NOT IMPLEMENTED · EXTERNALLY BLOCKED · REQUIRES DECISION
+
+| Area | Requirement | Evidence | Status |
+|---|---|---|---|
+| Tenancy | org → business → branch isolation, RLS | phase0 ISO-01..12, phase2 ISO-S1..S7 | VERIFIED |
+| Tenancy | Server-derived tenant context | phase0; resolve_tenant_context | VERIFIED |
+| Security | Owner/Manager/Cashier/Auditor permissions | phase0 ROLE-01..17, phase2 DISC-01, VOID-01, SUP-01 | VERIFIED |
+| Security | Direct table writes blocked | phase2 DIR-01..03 | VERIFIED |
+| Audit | Append-only activity log | phase0 AUD-01..06, phase2 AUD-S1..S4 | VERIFIED |
+| Auth | Email/Google sign-in, session, logout, unauthorized | live sign-in by owner account | IMPLEMENTED, NOT VERIFIED (no automated UI test) |
+| Catalog | SKU, barcode, unit, price, tax A–E | phase1 | VERIFIED |
+| Catalog | Variable-weight EAN-13 parsing at till | pos.tsx parser | IMPLEMENTED, NOT VERIFIED |
+| Engine | post_sale atomic, server prices, receipt numbers | phase1, phase2 SAL/ATOM | VERIFIED |
+| Engine | Split tender, cash-only change, M-Pesa code required | phase2 TEND-01, MPESA-01, DENI-01 | VERIFIED |
+| Engine | Idempotent replay / payload mismatch rejection | phase2 IDEM-S1..S4 | VERIFIED |
+| Engine | No sale beyond stock | phase2 STOCK-01..02 | VERIFIED |
+| Valuation | WAC, bulk breaking value conservation | phase2 WAC-01, BULK-01..04 | VERIFIED |
+| Valuation | Immutable COGS at sale | phase2 COGS-01..03, LEDGER-03 | VERIFIED |
+| Inventory | Audited adjustments | phase1 | VERIFIED |
+| Inventory | Physical stock counts | apply_stock_count, inventory.tsx | IMPLEMENTED, NOT VERIFIED |
+| Purchasing | Supplier directory, purchase orders | — | NOT IMPLEMENTED |
+| Purchasing | Goods received with supplier invoice | receive_stock has free-text reference only | PARTIAL |
+| Expenses | Petty cash / drawer payouts | phase3 PAY-01..16 (2026 run: 16/16) | VERIFIED |
+| Returns | Full-sale void with stock + Deni reversal | phase2 VOID-01..04, DENI-05 | VERIFIED |
+| Returns | Partial item return / refund | — | NOT IMPLEMENTED |
+| Shifts | Open, one-open rule, blind close, variance (incl. payouts) | phase2 SHIFT-01..06, phase3 PAY-11/13 | VERIFIED |
+| Staff | Invite by email, branch assignment, suspend | invite_member_by_email, staff.tsx | IMPLEMENTED, NOT VERIFIED |
+| Deni | Limits, credit sale, repayment, immutable ledger | phase2 DENI-01..05 | VERIFIED |
+| Deni | Aging breakdown | dashboard.tsx (client calc) | IMPLEMENTED, NOT VERIFIED |
+| Offline | Single IndexedDB queue, serial sync, rejected sales held | offline-queue.ts, pos.tsx | IMPLEMENTED, NOT VERIFIED (no browser test) |
+| Reports | KPIs, tender split, fast movers, reorder, exports | dashboard.tsx | IMPLEMENTED, NOT VERIFIED |
+| M-Pesa | Till/PayBill config, Live Ready not self-declarable | phase2 MPESA-02 | VERIFIED (guard only) |
+| M-Pesa | Manual reconciliation | reconcile_mpesa, mpesa.tsx | IMPLEMENTED, NOT VERIFIED |
+| M-Pesa | STK Push / C2B | needs Daraja credentials | EXTERNALLY BLOCKED |
+| eTIMS | Config, PIN validation, ready vs certified badges | save_etims_config, etims.tsx | IMPLEMENTED, NOT VERIFIED |
+| eTIMS | Live KRA transmission | needs KRA device onboarding | EXTERNALLY BLOCKED |
+| Plan | Tiers and soft caps | subscriptions; placeholder limits | REQUIRES DECISION |
+| Support | Time-limited grants, owner-only, ≤24h | phase2 SUP-01..02 | VERIFIED |
+| Support | Support staff sign-in using a grant | — | PARTIAL |
+| Ops | Backups / disaster recovery | platform-managed database backups only; no restore drill | PARTIAL |
+
+Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16 = **169/169**.
+
+Remaining order: (1) tests for stock counts + M-Pesa reconciliation, (2) suppliers & goods received, (3) partial returns, (4) support sign-in, (5) restore drill.
