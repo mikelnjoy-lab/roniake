@@ -129,12 +129,13 @@ Status key: VERIFIED (passing automated test) · IMPLEMENTED, NOT VERIFIED · PA
 | Valuation | WAC, bulk breaking value conservation | phase2 WAC-01, BULK-01..04 | VERIFIED |
 | Valuation | Immutable COGS at sale | phase2 COGS-01..03, LEDGER-03 | VERIFIED |
 | Inventory | Audited adjustments | phase1 | VERIFIED |
-| Inventory | Physical stock counts | apply_stock_count, inventory.tsx | IMPLEMENTED, NOT VERIFIED |
-| Purchasing | Supplier directory, purchase orders | — | NOT IMPLEMENTED |
-| Purchasing | Goods received with supplier invoice | receive_stock has free-text reference only | PARTIAL |
+| Inventory | Physical stock counts | phase4 CNT-01..21 (21/21); duplicate-product defect fixed | VERIFIED |
+| Purchasing | Supplier directory | phase5 SUP-01..06 | VERIFIED |
+| Purchasing | Purchase orders, supplier payables | — | NOT IMPLEMENTED |
+| Purchasing | Goods received against supplier invoice (idempotent, duplicate invoice blocked) | phase5 GRN-01..26 | VERIFIED |
 | Expenses | Petty cash / drawer payouts | phase3 PAY-01..16 (2026 run: 16/16) | VERIFIED |
 | Returns | Full-sale void with stock + Deni reversal | phase2 VOID-01..04, DENI-05 | VERIFIED |
-| Returns | Partial item return / refund | — | NOT IMPLEMENTED |
+| Returns | Partial item return / refund (cash, M-Pesa reversal code, Deni credit) | phase6 RET-01..26 | VERIFIED |
 | Shifts | Open, one-open rule, blind close, variance (incl. payouts) | phase2 SHIFT-01..06, phase3 PAY-11/13 | VERIFIED |
 | Staff | Invite by email, branch assignment, suspend | invite_member_by_email, staff.tsx | IMPLEMENTED, NOT VERIFIED |
 | Deni | Limits, credit sale, repayment, immutable ledger | phase2 DENI-01..05 | VERIFIED |
@@ -142,7 +143,7 @@ Status key: VERIFIED (passing automated test) · IMPLEMENTED, NOT VERIFIED · PA
 | Offline | Single IndexedDB queue, serial sync, rejected sales held | offline-queue.ts, pos.tsx | IMPLEMENTED, NOT VERIFIED (no browser test) |
 | Reports | KPIs, tender split, fast movers, reorder, exports | dashboard.tsx | IMPLEMENTED, NOT VERIFIED |
 | M-Pesa | Till/PayBill config, Live Ready not self-declarable | phase2 MPESA-02 | VERIFIED (guard only) |
-| M-Pesa | Manual reconciliation | reconcile_mpesa, mpesa.tsx | IMPLEMENTED, NOT VERIFIED |
+| M-Pesa | Manual reconciliation (amount match, duplicate code, transitions, retries) | phase4 MP-01..21; auditor-write defect fixed | VERIFIED |
 | M-Pesa | STK Push / C2B | needs Daraja credentials | EXTERNALLY BLOCKED |
 | eTIMS | Config, PIN validation, ready vs certified badges | save_etims_config, etims.tsx | IMPLEMENTED, NOT VERIFIED |
 | eTIMS | Live KRA transmission | needs KRA device onboarding | EXTERNALLY BLOCKED |
@@ -151,6 +152,12 @@ Status key: VERIFIED (passing automated test) · IMPLEMENTED, NOT VERIFIED · PA
 | Support | Support staff sign-in using a grant | — | PARTIAL |
 | Ops | Backups / disaster recovery | platform-managed database backups only; no restore drill | PARTIAL |
 
-Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16 = **169/169**.
+Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16, phase4 42/42, phase5 32/32, phase6 26/26 = **269/269** (phases 4–6 run once each after fixes; earlier phases not re-run this round).
 
-Remaining order: (1) tests for stock counts + M-Pesa reconciliation, (2) suppliers & goods received, (3) partial returns, (4) support sign-in, (5) restore drill.
+Defects found and fixed this round:
+- Stock count accepted the same product twice in one count (wrong totals) — now refused.
+- Auditors could mark M-Pesa payments verified/flagged (write access for a read-only role) — new mpesa.reconcile permission, owners/managers only.
+- M-Pesa: same code could be verified on two sales; voided sales could be verified; statement amount was never compared; repeated clicks wrote duplicate records — all fixed.
+- Two test assumptions corrected (not system defects): managers cover all branches by design; tax class B is the 16% class.
+
+Remaining order: (1) purchase orders and supplier payables, (2) support staff sign-in, (3) backup restore drill, (4) browser tests for offline sync, till and reports.
