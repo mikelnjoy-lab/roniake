@@ -23,6 +23,7 @@ function Sales() {
   const [open, setOpen] = useState<string | null>(null);
   const [width, setWidth] = useState<58 | 80>(80);
   const [voiding, setVoiding] = useState(false);
+  const [returning, setReturning] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const sales = useQuery({
@@ -34,15 +35,19 @@ function Sales() {
       const ids = data.map((s) => s.id);
       const t = ids.length ? (await supabase.from("sale_tenders").select("tender_type,amount,sale_id").in("sale_id", ids)).data ?? [] : [];
       const v = ids.length ? (await supabase.from("sale_voids").select("sale_id").in("sale_id", ids)).data ?? [] : [];
-      return { sales: data, tenders: t, voided: new Set(v.map((x) => x.sale_id)) };
+      const ret = (await supabase.from("sale_returns").select("refund_amount,tax_amount,cogs_reversed,refund_type").eq("branch_id", branch).gte("created_at", start.toISOString())).data ?? [];
+      return { sales: data, tenders: t, voided: new Set(v.map((x) => x.sale_id)), returns: ret };
     },
   });
   const receipt = useQuery({ queryKey: ["receipt", open], enabled: !!open, queryFn: () => loadReceipt(supabase, open!) });
   const voided = sales.data?.voided ?? new Set<string>();
   const all = sales.data?.sales ?? [];
   const s = all.filter((x) => !voided.has(x.id));
-  const total = s.reduce((a, x) => a + Number(x.total), 0);
-  const by = (k: string) => (sales.data?.tenders ?? []).filter((t) => t.tender_type === k && !voided.has(t.sale_id)).reduce((a, t) => a + Number(t.amount), 0);
+  const rets = sales.data?.returns ?? [];
+  const refunds = rets.reduce((a, r) => a + Number(r.refund_amount), 0);
+  const total = s.reduce((a, x) => a + Number(x.total), 0) - refunds;
+  const by = (k: string) => (sales.data?.tenders ?? []).filter((t) => t.tender_type === k && !voided.has(t.sale_id)).reduce((a, t) => a + Number(t.amount), 0)
+    - rets.filter((r) => r.refund_type === k).reduce((a, r) => a + Number(r.refund_amount), 0);
   const reports = can(tenant.permissions, "reports.view");
   const canVoid = can(tenant.permissions, "sales.void");
 
