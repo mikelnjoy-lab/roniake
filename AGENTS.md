@@ -8,3 +8,7 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Rules
+- Database verification suites live in `tests/phaseN/verification.sql`; run them through the migration tool with `begin;`/`rollback;` removed — each suite ends by raising its report, so nothing is ever applied. Why: psql here cannot execute functions, and the forced error guarantees real store data is never touched.
+- Offline sales: one IndexedDB queue keyed by client_txn_id; sync runs one at a time, and rejected sales are never auto-retried — they stay visible on the till until retried or dismissed by a manager. Why: a rejected offline sale means goods may have left unrecorded.

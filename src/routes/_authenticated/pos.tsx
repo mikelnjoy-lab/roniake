@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Receipt, loadReceipt } from "@/components/Receipt";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
-import { deviceId, isNetworkError, listPending, putPending, submitSale, syncPending } from "@/lib/offline-queue";
+import { deviceId, dismissFailed, isNetworkError, listPending, putPending, submitSale, syncPending, type PendingSale } from "@/lib/offline-queue";
 import { shiftQuery } from "./shift";
 
 export const Route = createFileRoute("/_authenticated/pos")({
@@ -51,15 +51,22 @@ function Pos() {
   const [done, setDone] = useState<{ saleId?: string; pending?: boolean; change?: number } | null>(null);
   const [width, setWidth] = useState<58 | 80>(80);
   const [pending, setPending] = useState(0);
+  const [failedSales, setFailedSales] = useState<PendingSale[]>([]);
   const [held, setHeld] = useState<{ at: string; cart: Line[] }[]>([]);
   const scanRef = useRef<HTMLInputElement>(null);
 
-  const refreshPending = async () => setPending((await listPending()).length);
+  const refreshPending = async () => {
+    const all = await listPending();
+    setPending(all.filter((p) => p.state !== "failed").length);
+    setFailedSales(all.filter((p) => p.state === "failed"));
+  };
+  const runSync = (includeFailed = false) => syncPending({ includeFailed }).then((r) => {
+    if (r.synced) toast.success(`${r.synced} offline sale(s) synced`);
+    if (r.failed) toast.error(`${r.failed} offline sale(s) rejected — see the red box on the till`);
+    refreshPending(); qc.invalidateQueries({ queryKey: ["sales"] });
+  });
   useEffect(() => { refreshPending(); setHeld(JSON.parse(localStorage.getItem(HOLD_KEY) ?? "[]")); }, []);
-  useEffect(() => {
-    if (!online) return;
-    syncPending().then((r) => { if (r.synced) toast.success(`${r.synced} offline sale(s) synced`); if (r.failed) toast.error(`${r.failed} offline sale(s) rejected — check Sales`); refreshPending(); qc.invalidateQueries({ queryKey: ["sales"] }); });
-  }, [online]);
+  useEffect(() => { if (online) runSync(); }, [online]);
 
   const total = useMemo(() => cart.reduce((a, l) => a + Math.round(l.p.selling_price * l.qty * 100) / 100 - l.discount, 0), [cart]);
   const paid = tenders.reduce((a, t) => a + Number(t.amount || 0), 0);
@@ -164,6 +171,27 @@ function Pos() {
 
   return (
     <AppShell wide right={pending ? <span className="rounded-md bg-accent px-2 py-1 text-sm font-black text-accent-foreground">{pending} to sync</span> : null}>
+      {failedSales.length > 0 && (
+        <div className="mb-4 rounded-xl border-4 border-destructive bg-card p-3">
+          <p className="text-lg font-black text-destructive">{failedSales.length} offline sale(s) were NOT recorded</p>
+          <p className="text-sm font-bold">These were rung up offline but refused when the till reconnected. Tell a manager — the goods may have left without a recorded sale.</p>
+          <ul className="mt-2 space-y-2">
+            {failedSales.map((f) => (
+              <li key={f.client_txn_id} className="rounded-lg border-2 border-foreground p-2 text-sm">
+                <p className="font-black">{new Date(f.created_at).toLocaleString()} · {kes(f.tenders.reduce((a, t) => a + Number(t.amount), 0))} paid</p>
+                <p className="font-bold">Reason: {f.error}</p>
+                <div className="mt-2 flex gap-2">
+                  <Button size="sm" onClick={() => runSync(true)}>Try again</Button>
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    if (!confirm("Remove this unrecorded sale from this till? Only do this after a manager has dealt with it.")) return;
+                    await dismissFailed(f.client_txn_id); refreshPending();
+                  }}>Manager has handled it</Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
         <div>
           <form onSubmit={(e) => { e.preventDefault(); scan(q); }}>
