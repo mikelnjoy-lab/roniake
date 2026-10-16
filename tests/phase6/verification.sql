@@ -24,7 +24,7 @@ begin
   biz_a := public.create_business('Ret Test A', 'A1', 'RA1');
   select id into br_a from public.branches where business_id = biz_a;
   perform public.add_business_member(biz_a, uc, 'cashier', array[br_a]);
-  insert into public.products(business_id, sku, name, unit, selling_price, tax_class) values (biz_a, 'R1', 'Soap', 'pc', 116, 'A') returning id into p1;
+  insert into public.products(business_id, sku, name, unit, selling_price, tax_class) values (biz_a, 'R1', 'Soap', 'pc', 116, 'B') returning id into p1;
   insert into public.products(business_id, sku, name, unit, selling_price, tax_class) values (biz_a, 'R2', 'Juice', 'pc', 100, 'B') returning id into p2;
   insert into public.customers(business_id, name, credit_enabled, credit_limit) values (biz_a, 'Wanjiku', true, 5000) returning id into cust;
   perform public.receive_stock(br_a, p1, 10, 60);
@@ -57,7 +57,7 @@ begin
   select qty_on_hand, wac into x, y from public.branch_stock where branch_id = br_a and product_id = p1;
   perform pg_temp.ok('RET-06 soap back in stock (10-3+1=8) at unchanged cost 60', x = 8 and y = 60, x||' @ '||y);
   select cogs_reversed, tax_amount into x, y from public.sale_returns where id = (r->>'return_id')::uuid;
-  perform pg_temp.ok('RET-07 cost reversed at original 60 and VAT 16 reversed', x = 60 and y = 16, x||' / '||y);
+  perform pg_temp.ok('RET-07 cost reversed at original 60 and VAT 16 reversed (class B = 16%)', x = 60 and y = 16, x||' / '||y);
   r2 := public.return_sale_items(s1, jsonb_build_array(jsonb_build_object('sale_line_id', l1, 'qty', 1)), 'cash', 'damaged wrapper', null, ref1);
   select count(*) into n from public.sale_returns where sale_id = s1;
   perform pg_temp.ok('RET-08 repeated submission replays, refund recorded once', r2->>'status' = 'replay' and n = 1, n::text);
