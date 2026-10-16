@@ -1616,8 +1616,13 @@ export type Database = {
         Returns: Json
       }
       reconcile_mpesa: {
-        Args: { _note: string; _status: string; _tender: number }
-        Returns: undefined
+        Args: {
+          _note?: string
+          _statement_amount?: number
+          _status: string
+          _tender: number
+        }
+        Returns: Json
       }
       record_deni_repayment: {
         Args: {

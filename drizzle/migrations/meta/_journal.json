@@ -78,6 +78,13 @@
       "when": 1792124263539,
       "tag": "0010_shift_cash_payouts",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792124549696,
+      "tag": "0011_harden_stock_count_and_mpesa_reconcile",
+      "breakpoints": true
     }
   ]
 }
