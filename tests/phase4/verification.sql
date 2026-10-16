@@ -150,9 +150,6 @@ begin
   perform pg_temp.as_admin();
   begin update public.mpesa_reconciliations set status = 'verified' where sale_tender_id = t2; raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('MP-20 reconciliation records immutable', raised);
-  begin insert into public.mpesa_reconciliations(business_id, sale_tender_id, status, actor_user_id) values (biz_a, t2, 'verified', ua);
-    raised := false; exception when others then raised := true; end;
-  -- admin bypasses RLS by design; the client role check is next
   perform pg_temp.as_user(ua);
   begin insert into public.mpesa_reconciliations(business_id, sale_tender_id, status, actor_user_id) values (biz_a, t2, 'verified', ua); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('MP-21 reconciliation cannot be inserted directly by app users', raised);
