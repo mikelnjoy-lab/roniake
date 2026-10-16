@@ -58,14 +58,32 @@ export async function submitSale(p: Omit<PendingSale, "state" | "created_at">) {
   return data as { status: string; sale_id: string; receipt_no: string; total: number; change_given: number };
 }
 
-export async function syncPending(): Promise<{ synced: number; failed: number }> {
-  let synced = 0, failed = 0;
-  for (const p of await listPending()) {
-    try { await submitSale(p); await remove(p.client_txn_id); synced++; }
-    catch (e) {
-      if (isNetworkError(e)) break;
-      await putPending({ ...p, state: "failed", error: String((e as Error).message) }); failed++;
-    }
-  }
-  return { synced, failed };
+// Duplicate key on (business, client_txn_id) means another attempt already recorded this sale.
+function isAlreadyRecorded(e: unknown) {
+  return (e as { code?: string })?.code === "23505";
 }
+
+// One sync at a time per tab: overlapping runs (reconnect + timer) would race the same sale.
+let running: Promise<{ synced: number; failed: number }> | null = null;
+
+export function syncPending(opts: { includeFailed?: boolean } = {}) {
+  if (running) return running;
+  running = (async () => {
+    let synced = 0, failed = 0;
+    for (const p of await listPending()) {
+      // Rejected sales are not retried automatically; a person must look at them first.
+      if (p.state === "failed" && !opts.includeFailed) continue;
+      try { await submitSale(p); await remove(p.client_txn_id); synced++; }
+      catch (e) {
+        if (isAlreadyRecorded(e)) { await remove(p.client_txn_id); synced++; continue; }
+        if (isNetworkError(e)) break;
+        await putPending({ ...p, state: "failed", error: String((e as Error).message) }); failed++;
+      }
+    }
+    return { synced, failed };
+  })().finally(() => { running = null; });
+  return running;
+}
+
+// Remove a rejected sale from this device after the manager has dealt with it (it was never recorded).
+export const dismissFailed = (id: string) => remove(id);
