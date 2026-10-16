@@ -38,8 +38,10 @@ const NAV = [
   { to: "/sales", label: "Sales" },
   { to: "/customers", label: "Deni" },
   { to: "/mpesa", label: "M-Pesa" },
+  { to: "/etims", label: "eTIMS" },
   { to: "/dashboard", label: "Reports" },
   { to: "/staff", label: "Staff" },
+  { to: "/plan", label: "Plan" },
 ] as const;
 
 export function AppShell({ children, right, wide }: { children: ReactNode; right?: ReactNode; wide?: boolean }) {
