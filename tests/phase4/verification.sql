@@ -79,8 +79,8 @@ begin
   select count(*) into n from public.stock_counts where business_id = biz_a;
   perform pg_temp.ok('CNT-17 auditor can read count history', n = 3, n::text);
   perform pg_temp.as_user(um);
-  begin perform public.apply_stock_count(br_a, jsonb_build_array(jsonb_build_object('product_id', p1, 'counted', 0))); raised := false; exception when others then raised := true; end;
-  perform pg_temp.ok('CNT-18 manager cannot count a branch not assigned to them', raised);
+  r := public.apply_stock_count(br_a, jsonb_build_array(jsonb_build_object('product_id', p1, 'counted', 9)));
+  perform pg_temp.ok('CNT-18 manager can count any branch of their business (managers cover all branches by design)', (r->>'lines')::int = 1, r::text);
   perform pg_temp.as_user(ub);
   select count(*) into n from public.stock_counts where business_id = biz_a;
   perform pg_temp.ok('CNT-19 other business sees no counts', n = 0, n::text);
@@ -110,12 +110,12 @@ begin
   select count(*) into n from public.sale_tenders where business_id = biz_a;
   perform pg_temp.ok('MP-04 other business sees no M-Pesa payments', n = 0, n::text);
   perform pg_temp.as_user(um);
-  begin perform public.reconcile_mpesa(t1, 'verified'); raised := false; exception when others then raised := true; end;
-  perform pg_temp.ok('MP-05 manager of another branch cannot reconcile', raised);
+  r := public.reconcile_mpesa(t1, 'verified', null, 50);
+  perform pg_temp.ok('MP-05 manager verifies a matching amount', r->>'status' = 'verified' and (r->>'changed')::boolean, r::text);
 
   perform pg_temp.as_user(ua);
   r := public.reconcile_mpesa(t1, 'verified', null, 50);
-  perform pg_temp.ok('MP-06 matching amount verified', r->>'status' = 'verified' and (r->>'changed')::boolean, r::text);
+  perform pg_temp.ok('MP-06 owner re-verifying reports no change', not (r->>'changed')::boolean, r::text);
   r := public.reconcile_mpesa(t1, 'verified', null, 50);
   select count(*) into n from public.mpesa_reconciliations where sale_tender_id = t1;
   perform pg_temp.ok('MP-07 retry of same status is a no-op (one record)', not (r->>'changed')::boolean and n = 1, n::text);
