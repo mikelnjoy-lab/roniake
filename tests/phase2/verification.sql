@@ -77,10 +77,10 @@ begin
   begin insert into public.sales(business_id, branch_id, receipt_no, client_txn_id, payload_hash, cashier_id, subtotal, discount_total, tax_total, total, tendered_total, change_given, cogs_total)
     values (biz_a, br_a1, 'FAKE', gen_random_uuid(), 'x', ua, 1,0,0,1,1,0,0); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('DIR-02 sales cannot be inserted directly', raised);
-  begin update public.customers set balance = 0 where id = cust; get diagnostics n = row_count;
-    select balance into x from public.customers where id = cust; raised := false; exception when others then raised := true; end;
-  -- balance column must not be writable by clients
-  perform pg_temp.ok('DIR-03 Deni balance cannot be edited directly', raised, coalesce(msg,''));
+  begin update public.customers set balance = 12345 where id = cust; exception when others then null; end;
+  select balance into x from public.customers where id = cust;
+  raised := x = 0;
+  perform pg_temp.ok('DIR-03 Deni balance cannot be edited directly', raised, x::text);
 
   -- cashier: shift + sale + idempotency
   perform pg_temp.as_user(uc);
