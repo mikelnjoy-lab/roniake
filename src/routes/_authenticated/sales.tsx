@@ -71,7 +71,7 @@ function Sales() {
           <div key={l} className="rounded-xl border-4 border-foreground bg-card p-3"><p className="text-sm font-bold uppercase">{l}</p><p className="text-2xl font-black">{v}</p></div>
         ))}
       </div>
-      {reports && <p className="mt-2 font-bold">Gross profit today: {kes(total - s.reduce((a, x) => a + Number(x.tax_total) + Number(x.cogs_total), 0))} (excl. VAT){voided.size ? ` · ${voided.size} voided` : ""}</p>}
+      {reports && <p className="mt-2 font-bold">Gross profit today: {kes(total - s.reduce((a, x) => a + Number(x.tax_total) + Number(x.cogs_total), 0) + rets.reduce((a, r) => a + Number(r.tax_amount) + Number(r.cogs_reversed), 0))} (excl. VAT){voided.size ? ` · ${voided.size} voided` : ""}{refunds ? ` · ${kes(refunds)} refunded` : ""}</p>}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <ul className="space-y-2">{all.map((x) => (
           <li key={x.id}><button onClick={() => { setOpen(x.id); setVoiding(false); }} className={`flex w-full justify-between rounded-lg border-2 px-3 py-3 text-left font-bold ${open === x.id ? "border-primary bg-secondary" : "border-foreground bg-card"} ${voided.has(x.id) ? "opacity-60" : ""}`}>
@@ -113,5 +113,59 @@ function Sales() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+function ReturnPanel({ saleId, onDone }: { saleId: string; onDone: () => void }) {
+  const lines = useQuery({
+    queryKey: ["return-lines", saleId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("sale_lines").select("id,product_name,qty,line_total").eq("sale_id", saleId).order("line_no");
+      if (error) throw error;
+      const ids = (data ?? []).map((l) => l.id);
+      const done = ids.length ? (await supabase.from("sale_return_lines").select("sale_line_id,qty").in("sale_line_id", ids)).data ?? [] : [];
+      return (data ?? []).map((l) => ({ ...l, left: Number(l.qty) - done.filter((d) => d.sale_line_id === l.id).reduce((a, d) => a + Number(d.qty), 0) }));
+    },
+  });
+  const [qty, setQty] = useState<Record<number, string>>({});
+  const [type, setType] = useState<"cash" | "mpesa_manual" | "deni">("cash");
+  const [reason, setReason] = useState("");
+  const [code, setCode] = useState("");
+  const [ref] = useState(() => crypto.randomUUID());
+  const [busy, setBusy] = useState(false);
+  const est = (lines.data ?? []).reduce((a, l) => a + (Number(qty[l.id]) || 0) * Number(l.line_total) / Number(l.qty), 0);
+
+  async function submit() {
+    const picked = Object.entries(qty).filter(([, v]) => Number(v) > 0).map(([k, v]) => ({ sale_line_id: Number(k), qty: Number(v) }));
+    if (!picked.length) { toast.error("Enter how many of each item came back"); return; }
+    if (reason.trim().length < 3) { toast.error("Give a reason"); return; }
+    setBusy(true);
+    const { data, error } = await supabase.rpc("return_sale_items", { _sale: saleId, _lines: picked as never, _refund_type: type, _reason: reason.trim(), _reference: code, _client_ref: ref });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    const d = data as { return_no: string; refund_amount: number; status: string };
+    toast.success(d.status === "replay" ? "Already recorded" : `Return ${d.return_no}: refund ${kes(d.refund_amount)}`);
+    onDone();
+  }
+
+  return (
+    <div className="mb-3 rounded-xl border-4 border-foreground bg-card p-3 print:hidden">
+      <p className="font-black">Which items came back?</p>
+      <ul className="mt-2 space-y-1">{(lines.data ?? []).map((l) => (
+        <li key={l.id} className="flex items-center justify-between gap-2">
+          <span className="font-bold">{l.product_name}<span className="block text-sm font-normal">sold {Number(l.qty)} · can return {l.left}</span></span>
+          <input type="number" min="0" max={l.left} step="0.001" disabled={l.left <= 0} value={qty[l.id] ?? ""} onChange={(e) => setQty({ ...qty, [l.id]: e.target.value })} className="h-12 w-24 rounded-lg border-2 border-foreground bg-background px-2 text-lg" />
+        </li>))}</ul>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {([["cash", "Cash"], ["mpesa_manual", "M-Pesa"], ["deni", "Deni credit"]] as const).map(([k, l]) => (
+          <Button key={k} variant={type === k ? "default" : "outline"} className="h-12 font-bold" onClick={() => setType(k)}>{l}</Button>
+        ))}
+      </div>
+      {type === "mpesa_manual" && <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="M-Pesa reversal code" className="mt-2 h-12 w-full rounded-lg border-2 border-foreground bg-background px-3" />}
+      <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (e.g. damaged, expired)" className="mt-2 h-12 w-full rounded-lg border-2 border-foreground bg-background px-3" />
+      <p className="mt-2 text-sm">Cash refunds come out of your own open shift drawer. Items go back on the shelf at their original cost.</p>
+      <p className="mt-1 text-lg font-black">Refund about {kes(est)}</p>
+      <Button className="mt-2 h-12 w-full font-black" disabled={busy} onClick={submit}>{busy ? "Saving…" : "Confirm return"}</Button>
+    </div>
   );
 }
