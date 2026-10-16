@@ -1004,6 +1004,157 @@ export type Database = {
           },
         ]
       }
+      sale_return_lines: {
+        Row: {
+          business_id: string
+          cogs_reversed: number
+          id: number
+          product_id: string
+          qty: number
+          refund_amount: number
+          return_id: string
+          sale_line_id: number
+          tax_amount: number
+          unit_cost: number
+        }
+        Insert: {
+          business_id: string
+          cogs_reversed: number
+          id?: never
+          product_id: string
+          qty: number
+          refund_amount: number
+          return_id: string
+          sale_line_id: number
+          tax_amount: number
+          unit_cost: number
+        }
+        Update: {
+          business_id?: string
+          cogs_reversed?: number
+          id?: never
+          product_id?: string
+          qty?: number
+          refund_amount?: number
+          return_id?: string
+          sale_line_id?: number
+          tax_amount?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_return_lines_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_return_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_return_lines_return_id_fkey"
+            columns: ["return_id"]
+            isOneToOne: false
+            referencedRelation: "sale_returns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_return_lines_sale_line_id_fkey"
+            columns: ["sale_line_id"]
+            isOneToOne: false
+            referencedRelation: "sale_lines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_returns: {
+        Row: {
+          actor_user_id: string
+          branch_id: string
+          business_id: string
+          client_ref: string
+          cogs_reversed: number
+          created_at: string
+          id: string
+          reason: string
+          reference: string | null
+          refund_amount: number
+          refund_type: Database["public"]["Enums"]["tender_type"]
+          return_no: string
+          sale_id: string
+          shift_id: string | null
+          tax_amount: number
+        }
+        Insert: {
+          actor_user_id: string
+          branch_id: string
+          business_id: string
+          client_ref: string
+          cogs_reversed: number
+          created_at?: string
+          id?: string
+          reason: string
+          reference?: string | null
+          refund_amount: number
+          refund_type: Database["public"]["Enums"]["tender_type"]
+          return_no: string
+          sale_id: string
+          shift_id?: string | null
+          tax_amount: number
+        }
+        Update: {
+          actor_user_id?: string
+          branch_id?: string
+          business_id?: string
+          client_ref?: string
+          cogs_reversed?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          reference?: string | null
+          refund_amount?: number
+          refund_type?: Database["public"]["Enums"]["tender_type"]
+          return_no?: string
+          sale_id?: string
+          shift_id?: string | null
+          tax_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_returns_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_returns_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_tenders: {
         Row: {
           amount: number
@@ -1818,6 +1969,17 @@ export type Database = {
       }
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }
+        Returns: Json
+      }
+      return_sale_items: {
+        Args: {
+          _client_ref: string
+          _lines: Json
+          _reason: string
+          _reference: string
+          _refund_type: Database["public"]["Enums"]["tender_type"]
+          _sale: string
+        }
         Returns: Json
       }
       revoke_support_access: { Args: { _grant: string }; Returns: undefined }

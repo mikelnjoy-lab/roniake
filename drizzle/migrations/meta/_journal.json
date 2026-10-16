@@ -92,6 +92,13 @@
       "when": 1792124815904,
       "tag": "0012_suppliers_and_invoice_receiving",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792125016509,
+      "tag": "0013_partial_sale_returns",
+      "breakpoints": true
     }
   ]
 }
