@@ -27,6 +27,7 @@ import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedSelectRouteImport } from './routes/_authenticated/select'
 import { Route as AuthenticatedShiftRouteImport } from './routes/_authenticated/shift'
 import { Route as AuthenticatedStaffRouteImport } from './routes/_authenticated/staff'
+import { Route as AuthenticatedSuppliersRouteImport } from './routes/_authenticated/suppliers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -117,6 +118,11 @@ const AuthenticatedStaffRoute = AuthenticatedStaffRouteImport.update({
   path: '/staff',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSuppliersRoute = AuthenticatedSuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
   '/staff': typeof AuthenticatedStaffRoute
+  '/suppliers': typeof AuthenticatedSuppliersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
   '/staff': typeof AuthenticatedStaffRoute
+  '/suppliers': typeof AuthenticatedSuppliersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/select': typeof AuthenticatedSelectRoute
   '/_authenticated/shift': typeof AuthenticatedShiftRoute
   '/_authenticated/staff': typeof AuthenticatedStaffRoute
+  '/_authenticated/suppliers': typeof AuthenticatedSuppliersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
     | '/select'
     | '/shift'
     | '/staff'
+    | '/suppliers'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/select'
     | '/shift'
     | '/staff'
+    | '/suppliers'
   id:
     | '__root__'
     | '/'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/_authenticated/select'
     | '/_authenticated/shift'
     | '/_authenticated/staff'
+    | '/_authenticated/suppliers'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -374,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStaffRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/suppliers': {
+      id: '/_authenticated/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof AuthenticatedSuppliersRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -391,6 +410,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSelectRoute: typeof AuthenticatedSelectRoute
   AuthenticatedShiftRoute: typeof AuthenticatedShiftRoute
   AuthenticatedStaffRoute: typeof AuthenticatedStaffRoute
+  AuthenticatedSuppliersRoute: typeof AuthenticatedSuppliersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -407,6 +427,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSelectRoute: AuthenticatedSelectRoute,
   AuthenticatedShiftRoute: AuthenticatedShiftRoute,
   AuthenticatedStaffRoute: AuthenticatedStaffRoute,
+  AuthenticatedSuppliersRoute: AuthenticatedSuppliersRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

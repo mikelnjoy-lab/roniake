@@ -35,6 +35,7 @@ const NAV = [
   { to: "/shift", label: "Shift" },
   { to: "/catalog", label: "Products" },
   { to: "/inventory", label: "Stock" },
+  { to: "/suppliers", label: "Suppliers" },
   { to: "/sales", label: "Sales" },
   { to: "/customers", label: "Deni" },
   { to: "/mpesa", label: "M-Pesa" },

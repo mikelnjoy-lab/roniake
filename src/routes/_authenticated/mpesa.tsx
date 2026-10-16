@@ -71,13 +71,22 @@ function Mpesa() {
     },
   });
 
-  async function mark(id: number, status: "verified" | "flagged") {
+  async function mark(id: number, status: "verified" | "flagged", amount: number) {
     let note = "";
+    let stmt: number | undefined;
     if (status === "flagged") { note = window.prompt("What doesn't match? (e.g. amount differs, code not on statement)") ?? ""; if (note.trim().length < 3) return; }
-    const { error } = await supabase.rpc("reconcile_mpesa", { _tender: id, _status: status, _note: note });
+    else {
+      const v = window.prompt("Amount shown on your M-Pesa statement (KES)", String(amount));
+      if (v === null) return;
+      stmt = Number(v);
+      if (!(stmt > 0)) { toast.error("Enter the statement amount"); return; }
+    }
+    const { data, error } = await supabase.rpc("reconcile_mpesa", { _tender: id, _status: status, _note: note, ...(stmt ? { _statement_amount: stmt } : {}) });
     if (error) { toast.error(error.message); return; }
+    if ((data as { changed?: boolean } | null)?.changed === false) toast.info("Already marked");
     qc.invalidateQueries({ queryKey: ["mpesa-pay", branch, days] });
   }
+  const canMark = can(tenant.permissions, "mpesa.reconcile");
 
   if (!review) return <AppShell><h1 className="text-3xl font-black">M-Pesa</h1><p className="mt-3 font-bold">Your role can't view M-Pesa settings.</p></AppShell>;
 
@@ -136,10 +145,10 @@ function Mpesa() {
                 <p className="text-sm">{x.sale.receipt_no} · {new Date(x.sale.created_at).toLocaleString()}</p>
                 {x.duplicate && <p className="text-sm font-black text-destructive">Same code used on more than one sale</p>}
                 {x.rec && <p className="text-sm font-bold">{x.rec.status === "verified" ? "✓ Verified" : `⚠ Flagged: ${x.rec.note}`}</p>}
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <Button size="lg" className="font-black" onClick={() => mark(x.id, "verified")}>On statement</Button>
-                  <Button size="lg" variant="destructive" className="font-black" onClick={() => mark(x.id, "flagged")}>Mismatch</Button>
-                </div>
+                {canMark && <div className="mt-2 grid grid-cols-2 gap-2">
+                  <Button size="lg" className="font-black" onClick={() => mark(x.id, "verified", Number(x.amount))}>On statement</Button>
+                  <Button size="lg" variant="destructive" className="font-black" onClick={() => mark(x.id, "flagged", Number(x.amount))}>Mismatch</Button>
+                </div>}
               </li>
             ))}
             {!rows.length && <li className="text-muted-foreground">{pay.isLoading ? "Loading…" : "Nothing here."}</li>}

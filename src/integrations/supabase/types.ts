@@ -774,6 +774,122 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_invoice_lines: {
+        Row: {
+          business_id: string
+          id: number
+          invoice_id: string
+          line_cost: number
+          product_id: string
+          qty: number
+          unit_cost: number
+        }
+        Insert: {
+          business_id: string
+          id?: never
+          invoice_id: string
+          line_cost: number
+          product_id: string
+          qty: number
+          unit_cost: number
+        }
+        Update: {
+          business_id?: string
+          id?: never
+          invoice_id?: string
+          line_cost?: number
+          product_id?: string
+          qty?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoice_lines_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoice_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_invoices: {
+        Row: {
+          actor_user_id: string
+          branch_id: string
+          business_id: string
+          client_ref: string
+          created_at: string
+          id: string
+          invoice_date: string
+          invoice_no: string
+          line_count: number
+          supplier_id: string
+          total_cost: number
+        }
+        Insert: {
+          actor_user_id: string
+          branch_id: string
+          business_id: string
+          client_ref: string
+          created_at?: string
+          id?: string
+          invoice_date: string
+          invoice_no: string
+          line_count: number
+          supplier_id: string
+          total_cost: number
+        }
+        Update: {
+          actor_user_id?: string
+          branch_id?: string
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          id?: string
+          invoice_date?: string
+          invoice_no?: string
+          line_count?: number
+          supplier_id?: string
+          total_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_invoices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       receipt_counters: {
         Row: {
           branch_id: string
@@ -1396,6 +1512,53 @@ export type Database = {
           },
         ]
       }
+      suppliers: {
+        Row: {
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          kra_pin: string | null
+          name: string
+          payment_terms_days: number
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          kra_pin?: string | null
+          name: string
+          payment_terms_days?: number
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          kra_pin?: string | null
+          name?: string
+          payment_terms_days?: number
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_grants: {
         Row: {
           business_id: string
@@ -1605,6 +1768,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      receive_purchase_invoice: {
+        Args: {
+          _branch: string
+          _client_ref: string
+          _invoice_date: string
+          _invoice_no: string
+          _lines: Json
+          _supplier: string
+        }
+        Returns: Json
+      }
       receive_stock: {
         Args: {
           _branch: string
@@ -1616,8 +1790,13 @@ export type Database = {
         Returns: Json
       }
       reconcile_mpesa: {
-        Args: { _note: string; _status: string; _tender: number }
-        Returns: undefined
+        Args: {
+          _note?: string
+          _statement_amount?: number
+          _status: string
+          _tender: number
+        }
+        Returns: Json
       }
       record_deni_repayment: {
         Args: {
@@ -1664,6 +1843,18 @@ export type Database = {
           _status: string
           _store: string
           _till: string
+        }
+        Returns: string
+      }
+      save_supplier: {
+        Args: {
+          _active?: boolean
+          _business: string
+          _id: string
+          _kra_pin: string
+          _name: string
+          _phone: string
+          _terms: number
         }
         Returns: string
       }
