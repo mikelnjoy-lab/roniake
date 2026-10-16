@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Receipt, loadReceipt } from "@/components/Receipt";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
-import { deviceId, isNetworkError, listPending, putPending, submitSale, syncPending } from "@/lib/offline-queue";
+import { deviceId, dismissFailed, isNetworkError, listPending, putPending, submitSale, syncPending, type PendingSale } from "@/lib/offline-queue";
 import { shiftQuery } from "./shift";
 
 export const Route = createFileRoute("/_authenticated/pos")({
@@ -51,15 +51,22 @@ function Pos() {
   const [done, setDone] = useState<{ saleId?: string; pending?: boolean; change?: number } | null>(null);
   const [width, setWidth] = useState<58 | 80>(80);
   const [pending, setPending] = useState(0);
+  const [failedSales, setFailedSales] = useState<PendingSale[]>([]);
   const [held, setHeld] = useState<{ at: string; cart: Line[] }[]>([]);
   const scanRef = useRef<HTMLInputElement>(null);
 
-  const refreshPending = async () => setPending((await listPending()).length);
+  const refreshPending = async () => {
+    const all = await listPending();
+    setPending(all.filter((p) => p.state !== "failed").length);
+    setFailedSales(all.filter((p) => p.state === "failed"));
+  };
+  const runSync = (includeFailed = false) => syncPending({ includeFailed }).then((r) => {
+    if (r.synced) toast.success(`${r.synced} offline sale(s) synced`);
+    if (r.failed) toast.error(`${r.failed} offline sale(s) rejected — see the red box on the till`);
+    refreshPending(); qc.invalidateQueries({ queryKey: ["sales"] });
+  });
   useEffect(() => { refreshPending(); setHeld(JSON.parse(localStorage.getItem(HOLD_KEY) ?? "[]")); }, []);
-  useEffect(() => {
-    if (!online) return;
-    syncPending().then((r) => { if (r.synced) toast.success(`${r.synced} offline sale(s) synced`); if (r.failed) toast.error(`${r.failed} offline sale(s) rejected — check Sales`); refreshPending(); qc.invalidateQueries({ queryKey: ["sales"] }); });
-  }, [online]);
+  useEffect(() => { if (online) runSync(); }, [online]);
 
   const total = useMemo(() => cart.reduce((a, l) => a + Math.round(l.p.selling_price * l.qty * 100) / 100 - l.discount, 0), [cart]);
   const paid = tenders.reduce((a, t) => a + Number(t.amount || 0), 0);
