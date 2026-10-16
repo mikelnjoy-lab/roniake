@@ -46,7 +46,7 @@ Reference specs (Master Architecture v2.0.0, Implementation Plan v1.1.0, Build B
 Not in Phase 1 (later build steps): shifts/blind close, Deni credit sales, sale voids/refunds, stock audits (count sessions), M-Pesa STK/C2B, eTIMS submission. Stock may go negative on sale so offline sales are never refused; negative stock is for review.
 
 ## Production Application Assembly & Controlled Pilot
-Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided setup ⬜ · User/role management ⬜ · POS ⬜ · Shifts ⬜ · Receipts ⬜ · Offline UX ⬜ · Inventory UX ⬜ · Back Office ⬜ · Customers/Deni ⬜ · M-Pesa UX ⬜ (manual first; Daraja credentials pending) · eTIMS UX ⬜ · Subscription UX ⬜ · Support-access UX ⬜ · Deployment ⬜ · Infrastructure prerequisites ⬜ · External approvals 🔴 (Daraja production, KRA eTIMS) · Controlled pilot onboarding ⬜
+See the 2026-10-16 verification audit below for the current status of each item.
 
 ## Application Assembly — Step 1: Authentication & Secure Business Entry — 🟡 IN PROGRESS (built, awaiting live sign-in test)
 - Email/password + Google sign-in, sign-up with email confirmation, password reset, secure sign-out (cache cleared, history replaced).
@@ -69,3 +69,39 @@ Authentication ⬜ · Business selection ⬜ · Branch selection ⬜ · Guided s
 - Customers & Deni (migration 0005): customers (default Deni off, limit), immutable customer_ledger, Deni tender with limit check in `post_sale`, `record_deni_repayment`.
 - Staff: `invite_member_by_email` (existing account required), `list_members`, suspend/reactivate.
 - Stock counts: `apply_stock_count` records count + lines (immutable) and adjusts variances.
+
+## Verification audit — 2026-10-16
+
+All suites run against this project's database, each ending in a forced error so every test record is rolled back. Afterwards: 0 leftover test businesses; real data unchanged (3 products, 9 sales).
+
+| Suite | Result |
+|---|---|
+| Phase 0 `tests/phase0` (tenancy, roles, branches, audit, idempotency) | **49 / 49 passed** |
+| Phase 1 `tests/phase1` (catalog, WAC, bulk break, sale engine) | **47 / 47 passed** — earlier "hangs in psql" was a runner problem, not a defect |
+| Phase 2 `tests/phase2` (new: high-risk invariants) | Run 1: 55/57 (2 test bugs — cashier read stock from a table cashiers may not see; fixed to use the till's stock function). Run 2: **57 / 57 passed** |
+| **Total** | **153 / 153** |
+
+Phase 2 covers: owner creates a second branch; cross-business denial for stock, sales, products, customers, voids; cashier denied unassigned branch, discounts, voids, support grants; duplicate sale submission replays one receipt and deducts stock once; same id with different contents refused; out-of-stock refused (incl. split lines); refused sale leaves stock untouched; WAC 230 exact; 1 crate → 24 units, value conserved; COGS frozen and unchanged after new cost; Deni limit, repayment rules, balance = ledger; void returns stock, double void refused, sale kept; blind close hides expected/variance from cashier, expected = float + net cash with voids excluded; on-hand = ledger sum, no negative stock, sale COGS = line COGS; ledgers/voids/movements immutable even for privileged role; M-Pesa "Live Ready" cannot be self-declared.
+
+Real store integrity (read-only): stock vs ledger mismatches 0, negative stock 0, Deni balance vs ledger mismatches 0, COGS mismatches 0. 2 shifts currently open.
+
+### Defects found and fixed
+- Offline sync: overlapping sync runs could report a successfully recorded sale as "failed"; rejected offline sales were retried forever and could not be seen. Fixed: one sync at a time, duplicate = already recorded, rejected sales shown on the till in red with reason, Try again, and manager dismissal. (Typecheck clean; not yet exercised in a browser.)
+
+### Status by item
+| Item | Status |
+|---|---|
+| Tenancy, roles, branch access, audit, idempotency | 🔵 VERIFIED (DB) |
+| Sale engine, stock guard, WAC, bulk break, COGS | 🔵 VERIFIED (DB) |
+| Shifts / blind close, Deni, voids | 🔵 VERIFIED (DB) |
+| Stock counts, staff invites, M-Pesa reconciliation, eTIMS config, support grants | 🟢 implemented; partially tested (permission checks only) |
+| Sign-in, screens, receipts printing, offline UX | 🟢 implemented; used by owner in pilot (real sales exist); no automated UI tests |
+| Live M-Pesa STK/C2B | 🔴 BLOCKED — Safaricom Daraja credentials |
+| eTIMS submission | 🔴 BLOCKED — KRA approval / device keys |
+| Plan limits | ⚠️ REQUIRES REVIEW — real plan names/limits from owner |
+| Support staff sign-in | ⬜ NOT STARTED |
+
+### Remaining risks
+- Offline sales refused on reconnect (e.g. stock ran out meanwhile) need a manager to act; goods may have left unrecorded.
+- No automated browser tests; screen-level behaviour verified only by pilot use.
+- Stock counts and M-Pesa reconciliation business rules not yet covered by DB tests.
