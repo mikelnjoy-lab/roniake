@@ -97,7 +97,7 @@ begin
   perform pg_temp.ok('IDEM-S1 duplicate submission replays the same receipt', r2->>'status' = 'replay' and r2->>'receipt_no' = r->>'receipt_no');
   select count(*) into n from public.sales where client_txn_id = t1;
   perform pg_temp.ok('IDEM-S2 duplicate submission creates no second sale', n = 1, n::text);
-  select qty_on_hand into x from public.branch_stock where branch_id = br_a1 and product_id = p_oil;
+  select l.qty_on_hand into x from public.branch_stock_levels(br_a1) l where l.product_id = p_oil;
   perform pg_temp.ok('IDEM-S3 duplicate submission deducts stock once (20-2=18)', x = 18, x::text);
   begin perform public.post_sale(br_a1, t1, jsonb_build_array(jsonb_build_object('product_id', p_oil, 'qty', 3)), '[{"type":"cash","amount":1000}]'); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('IDEM-S4 same id with different contents rejected', raised);
@@ -110,7 +110,7 @@ begin
   begin perform public.post_sale(br_a1, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p_oil, 'qty', 10), jsonb_build_object('product_id', p_oil, 'qty', 10)), '[{"type":"cash","amount":6000}]'); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('STOCK-02 split lines summed for stock check', raised);
   begin perform public.post_sale(br_a1, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p_oil, 'qty', 1)), '[{"type":"cash","amount":100}]'); raised := false; exception when others then raised := true; end;
-  select qty_on_hand into x from public.branch_stock where branch_id = br_a1 and product_id = p_oil;
+  select l.qty_on_hand into x from public.branch_stock_levels(br_a1) l where l.product_id = p_oil;
   perform pg_temp.ok('ATOM-01 rejected sale (underpaid) leaves stock unchanged', raised and x = 18, x::text);
   begin perform public.post_sale(br_a1, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p_oil, 'qty', 1, 'discount', 50)), '[{"type":"cash","amount":250}]'); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('DISC-01 cashier cannot discount', raised);
