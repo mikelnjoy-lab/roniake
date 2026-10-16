@@ -149,15 +149,16 @@ Status key: VERIFIED (passing automated test) · IMPLEMENTED, NOT VERIFIED · PA
 | eTIMS | Live KRA transmission | needs KRA device onboarding | EXTERNALLY BLOCKED |
 | Plan | Tiers and soft caps | subscriptions; placeholder limits | REQUIRES DECISION |
 | Support | Time-limited grants, owner-only, ≤24h | phase2 SUP-01..02 | VERIFIED |
-| Support | Support staff sign-in using a grant | — | PARTIAL |
-| Ops | Backups / disaster recovery | platform-managed database backups only; no restore drill | PARTIAL |
+| Purchasing | Purchase orders: create → approve (owner/manager) → part/full receive → cancel with reason; numbered PO-00001 per business | migration 0014; tests/phase5b PO-01..08, GRN-PO-01..12, CAN-01..04 | VERIFIED (DB) |
+| Purchasing | Over-receiving refused; items not on order refused; cancelled/draft/fully received orders refuse deliveries | phase5b GRN-PO-07..11, CAN-03 | VERIFIED (DB) |
+| Payables | Supplier payments linked to invoices; immutable; duplicate submission replays; duplicate reference refused; overpayment refused | phase5b PAY-02..14 | VERIFIED (DB) |
+| Payables | Outstanding/overdue balances derived only from invoices − payments (no stored balance) | supplier_balances(); phase5b PAY-01, PAY-11 | VERIFIED (DB) |
+| Purchasing | Orders & owed screen | purchasing.tsx | IMPLEMENTED, NOT VERIFIED (no browser test) |
+| Support | Support staff sign-in using a grant | — | REQUIRES DECISION (who RONIA support staff are) |
+| Ops | Backups / disaster recovery | platform daily backups exist; no practice restore performed | NOT VERIFIED — restore must be run by the owner from Cloud → Database → Backups into a separate project; recoverability NOT claimed |
 
-Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16, phase4 42/42, phase5 32/32, phase6 26/26 = **269/269** (phases 4–6 run once each after fixes; earlier phases not re-run this round).
+Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16, phase4 42/42, phase5 32/32 (re-run after receiving refactor), phase5b 53/53, phase6 26/26 = **322/322**. phase5b passed on first run; phase5 re-run passed unchanged.
 
-Defects found and fixed this round:
-- Stock count accepted the same product twice in one count (wrong totals) — now refused.
-- Auditors could mark M-Pesa payments verified/flagged (write access for a read-only role) — new mpesa.reconcile permission, owners/managers only.
-- M-Pesa: same code could be verified on two sales; voided sales could be verified; statement amount was never compared; repeated clicks wrote duplicate records — all fixed.
-- Two test assumptions corrected (not system defects): managers cover all branches by design; tax class B is the 16% class.
+Purchasing round notes: direct invoice receiving and order receiving now share one internal posting routine, so WAC, stock movements, duplicate-invoice blocking and audit are identical for both. Historical invoice costs and COGS untouched; actual invoice cost (not order cost) feeds WAC.
 
-Remaining order: (1) purchase orders and supplier payables, (2) support staff sign-in, (3) backup restore drill, (4) browser tests for offline sync, till and reports.
+Remaining order: (1) support staff sign-in (needs decision), (2) practice backup restore (needs owner action), (3) browser tests for offline sync, till, reports, purchasing.
