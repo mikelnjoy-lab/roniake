@@ -99,6 +99,13 @@
       "when": 1792125016509,
       "tag": "0013_partial_sale_returns",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792126396741,
+      "tag": "0014_purchase_orders_and_supplier_payables",
+      "breakpoints": true
     }
   ]
 }
