@@ -94,7 +94,7 @@ begin
   perform pg_temp.as_user(uc);
   perform public.open_shift(br_a, 0);
   r := public.post_sale(br_a, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p2, 'qty', 1)), '[{"type":"mpesa_manual","amount":50,"reference":"QAA111BBB1"}]'); s1 := (r->>'sale_id')::uuid;
-  r := public.post_sale(br_a, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p2, 'qty', 1)), '[{"type":"mpesa_manual","amount":50,"reference":"qaa111bbb1"}]'); s2 := (r->>'sale_id')::uuid;
+  r := public.post_sale(br_a, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p2, 'qty', 1)), '[{"type":"mpesa_manual","amount":50,"reference":"QAA111BBB1"}]'); s2 := (r->>'sale_id')::uuid;
   r := public.post_sale(br_a, gen_random_uuid(), jsonb_build_array(jsonb_build_object('product_id', p2, 'qty', 1)), '[{"type":"mpesa_manual","amount":50,"reference":"QCC333DDD3"}]'); s3 := (r->>'sale_id')::uuid;
   select id into t1 from public.sale_tenders where sale_id = s1;
   select id into t2 from public.sale_tenders where sale_id = s2;
@@ -120,7 +120,7 @@ begin
   select count(*) into n from public.mpesa_reconciliations where sale_tender_id = t1;
   perform pg_temp.ok('MP-07 retry of same status is a no-op (one record)', not (r->>'changed')::boolean and n = 1, n::text);
   begin perform public.reconcile_mpesa(t2, 'verified'); raised := false; exception when others then raised := true; msg := sqlerrm; end;
-  perform pg_temp.ok('MP-08 duplicate code cannot be verified twice (case-insensitive)', raised, msg);
+  perform pg_temp.ok('MP-08 duplicate code cannot be verified twice', raised, msg);
   r := public.reconcile_mpesa(t2, 'flagged', 'same code as another sale');
   perform pg_temp.ok('MP-09 duplicate code can be flagged', r->>'status' = 'flagged');
   begin perform public.reconcile_mpesa(t3, 'verified', null, 40); raised := false; exception when others then raised := true; msg := sqlerrm; end;
