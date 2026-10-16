@@ -17,9 +17,11 @@ import { Route as UnauthorizedRouteImport } from './routes/unauthorized'
 import { Route as AuthenticatedCatalogRouteImport } from './routes/_authenticated/catalog'
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEtimsRouteImport } from './routes/_authenticated/etims'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedMpesaRouteImport } from './routes/_authenticated/mpesa'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedSelectRouteImport } from './routes/_authenticated/select'
@@ -65,6 +67,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEtimsRoute = AuthenticatedEtimsRouteImport.update({
+  id: '/etims',
+  path: '/etims',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
   id: '/home',
   path: '/home',
@@ -78,6 +85,11 @@ const AuthenticatedInventoryRoute = AuthenticatedInventoryRouteImport.update({
 const AuthenticatedMpesaRoute = AuthenticatedMpesaRouteImport.update({
   id: '/mpesa',
   path: '/mpesa',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
@@ -114,9 +126,11 @@ export interface FileRoutesByFullPath {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/etims': typeof AuthenticatedEtimsRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mpesa': typeof AuthenticatedMpesaRoute
+  '/plan': typeof AuthenticatedPlanRoute
   '/pos': typeof AuthenticatedPosRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
@@ -131,9 +145,11 @@ export interface FileRoutesByTo {
   '/catalog': typeof AuthenticatedCatalogRoute
   '/customers': typeof AuthenticatedCustomersRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/etims': typeof AuthenticatedEtimsRoute
   '/home': typeof AuthenticatedHomeRoute
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mpesa': typeof AuthenticatedMpesaRoute
+  '/plan': typeof AuthenticatedPlanRoute
   '/pos': typeof AuthenticatedPosRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
@@ -150,9 +166,11 @@ export interface FileRoutesById {
   '/_authenticated/catalog': typeof AuthenticatedCatalogRoute
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/etims': typeof AuthenticatedEtimsRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/mpesa': typeof AuthenticatedMpesaRoute
+  '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/select': typeof AuthenticatedSelectRoute
@@ -169,9 +187,11 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/customers'
     | '/dashboard'
+    | '/etims'
     | '/home'
     | '/inventory'
     | '/mpesa'
+    | '/plan'
     | '/pos'
     | '/sales'
     | '/select'
@@ -186,9 +206,11 @@ export interface FileRouteTypes {
     | '/catalog'
     | '/customers'
     | '/dashboard'
+    | '/etims'
     | '/home'
     | '/inventory'
     | '/mpesa'
+    | '/plan'
     | '/pos'
     | '/sales'
     | '/select'
@@ -204,9 +226,11 @@ export interface FileRouteTypes {
     | '/_authenticated/catalog'
     | '/_authenticated/customers'
     | '/_authenticated/dashboard'
+    | '/_authenticated/etims'
     | '/_authenticated/home'
     | '/_authenticated/inventory'
     | '/_authenticated/mpesa'
+    | '/_authenticated/plan'
     | '/_authenticated/pos'
     | '/_authenticated/sales'
     | '/_authenticated/select'
@@ -280,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/etims': {
+      id: '/_authenticated/etims'
+      path: '/etims'
+      fullPath: '/etims'
+      preLoaderRoute: typeof AuthenticatedEtimsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/home': {
       id: '/_authenticated/home'
       path: '/home'
@@ -299,6 +330,13 @@ declare module '@tanstack/react-router' {
       path: '/mpesa'
       fullPath: '/mpesa'
       preLoaderRoute: typeof AuthenticatedMpesaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/pos': {
@@ -343,9 +381,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCatalogRoute: typeof AuthenticatedCatalogRoute
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEtimsRoute: typeof AuthenticatedEtimsRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMpesaRoute: typeof AuthenticatedMpesaRoute
+  AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSelectRoute: typeof AuthenticatedSelectRoute
@@ -357,9 +397,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCatalogRoute: AuthenticatedCatalogRoute,
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEtimsRoute: AuthenticatedEtimsRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMpesaRoute: AuthenticatedMpesaRoute,
+  AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSelectRoute: AuthenticatedSelectRoute,
