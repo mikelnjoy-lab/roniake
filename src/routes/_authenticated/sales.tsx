@@ -80,9 +80,15 @@ function Sales() {
               <Button variant={width === 80 ? "default" : "outline"} onClick={() => setWidth(80)}>80mm</Button>
               <Button onClick={() => window.print()} className="font-black">Print</Button>
               {!receipt.data.void && (canVoid
-                ? <Button variant="destructive" className="font-black" onClick={() => setVoiding(true)}>Void sale</Button>
-                : <span className="self-center text-sm font-bold">Need a void? Ask a manager.</span>)}
+                ? <>
+                    <Button variant="destructive" className="font-black" onClick={() => { setVoiding(true); setReturning(false); }}>Void sale</Button>
+                    <Button variant="outline" className="border-2 font-black" onClick={() => { setReturning(true); setVoiding(false); }}>Return items</Button>
+                  </>
+                : <span className="self-center text-sm font-bold">Need a void or return? Ask a manager.</span>)}
             </div>
+            {returning && !receipt.data.void && (
+              <ReturnPanel saleId={open} onDone={() => { setReturning(false); qc.invalidateQueries({ queryKey: ["sales", branch] }); }} />
+            )}
             {voiding && (
               <div className="mb-3 rounded-xl border-4 border-destructive bg-card p-3 print:hidden">
                 <p className="font-black">Why is this sale being voided?</p>
