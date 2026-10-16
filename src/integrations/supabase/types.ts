@@ -837,6 +837,7 @@ export type Database = {
           invoice_date: string
           invoice_no: string
           line_count: number
+          purchase_order_id: string | null
           supplier_id: string
           total_cost: number
         }
@@ -850,6 +851,7 @@ export type Database = {
           invoice_date: string
           invoice_no: string
           line_count: number
+          purchase_order_id?: string | null
           supplier_id: string
           total_cost: number
         }
@@ -863,6 +865,7 @@ export type Database = {
           invoice_date?: string
           invoice_no?: string
           line_count?: number
+          purchase_order_id?: string | null
           supplier_id?: string
           total_cost?: number
         }
@@ -882,7 +885,148 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "purchase_invoices_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "purchase_invoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_order_lines: {
+        Row: {
+          business_id: string
+          id: number
+          po_id: string
+          product_id: string
+          qty_ordered: number
+          qty_received: number
+          unit_cost: number
+        }
+        Insert: {
+          business_id: string
+          id?: never
+          po_id: string
+          product_id: string
+          qty_ordered: number
+          qty_received?: number
+          unit_cost: number
+        }
+        Update: {
+          business_id?: string
+          id?: never
+          po_id?: string
+          product_id?: string
+          qty_ordered?: number
+          qty_received?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_lines_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_order_lines_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string
+          business_id: string
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          client_ref: string
+          created_at: string
+          created_by: string
+          expected_total: number
+          id: string
+          note: string | null
+          po_no: string
+          status: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id: string
+          business_id: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_ref: string
+          created_at?: string
+          created_by: string
+          expected_total: number
+          id?: string
+          note?: string | null
+          po_no: string
+          status?: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string
+          business_id?: string
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          client_ref?: string
+          created_at?: string
+          created_by?: string
+          expected_total?: number
+          id?: string
+          note?: string | null
+          po_no?: string
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
@@ -1663,6 +1807,80 @@ export type Database = {
           },
         ]
       }
+      supplier_payments: {
+        Row: {
+          actor_user_id: string
+          amount: number
+          branch_id: string
+          business_id: string
+          client_ref: string
+          created_at: string
+          id: string
+          invoice_id: string
+          method: string
+          paid_on: string
+          reference: string | null
+          supplier_id: string
+        }
+        Insert: {
+          actor_user_id: string
+          amount: number
+          branch_id: string
+          business_id: string
+          client_ref: string
+          created_at?: string
+          id?: string
+          invoice_id: string
+          method: string
+          paid_on: string
+          reference?: string | null
+          supplier_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          amount?: number
+          branch_id?: string
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          method?: string
+          paid_on?: string
+          reference?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           business_id: string
@@ -1795,6 +2013,7 @@ export type Database = {
         }
         Returns: number
       }
+      approve_purchase_order: { Args: { _po: string }; Returns: Json }
       branch_business_checked: {
         Args: { _branch: string; _permission: string }
         Returns: string
@@ -1814,6 +2033,10 @@ export type Database = {
       can_access_branch_row: {
         Args: { _branch: string; _business: string }
         Returns: boolean
+      }
+      cancel_purchase_order: {
+        Args: { _po: string; _reason: string }
+        Returns: Json
       }
       claim_idempotency: {
         Args: {
@@ -1837,6 +2060,16 @@ export type Database = {
       create_business: {
         Args: { _branch_code?: string; _branch_name: string; _name: string }
         Returns: string
+      }
+      create_purchase_order: {
+        Args: {
+          _branch: string
+          _client_ref: string
+          _lines: Json
+          _note: string
+          _supplier: string
+        }
+        Returns: Json
       }
       grant_support_access: {
         Args: {
@@ -1880,6 +2113,19 @@ export type Database = {
       }
       my_open_shift: { Args: { _branch: string }; Returns: Json }
       open_shift: { Args: { _branch: string; _float: number }; Returns: string }
+      post_purchase_invoice_internal: {
+        Args: {
+          _biz: string
+          _branch: string
+          _client_ref: string
+          _invoice_date: string
+          _invoice_no: string
+          _lines: Json
+          _po: string
+          _supplier: string
+        }
+        Returns: Json
+      }
       post_sale: {
         Args: {
           _branch: string
@@ -1930,6 +2176,16 @@ export type Database = {
         }
         Returns: Json
       }
+      receive_purchase_order: {
+        Args: {
+          _client_ref: string
+          _invoice_date: string
+          _invoice_no: string
+          _lines: Json
+          _po: string
+        }
+        Returns: Json
+      }
       receive_stock: {
         Args: {
           _branch: string
@@ -1966,6 +2222,17 @@ export type Database = {
           _shift: string
         }
         Returns: number
+      }
+      record_supplier_payment: {
+        Args: {
+          _amount: number
+          _client_ref: string
+          _invoice: string
+          _method: string
+          _paid_on: string
+          _reference: string
+        }
+        Returns: Json
       }
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }
@@ -2021,6 +2288,17 @@ export type Database = {
         Returns: string
       }
       subscription_overview: { Args: { _business: string }; Returns: Json }
+      supplier_balances: {
+        Args: { _business: string }
+        Returns: {
+          invoiced: number
+          outstanding: number
+          overdue: number
+          paid: number
+          supplier_id: string
+          supplier_name: string
+        }[]
+      }
       void_sale: { Args: { _reason: string; _sale: string }; Returns: Json }
       write_audit: {
         Args: {
