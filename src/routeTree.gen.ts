@@ -23,6 +23,7 @@ import { Route as AuthenticatedInventoryRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMpesaRouteImport } from './routes/_authenticated/mpesa'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
+import { Route as AuthenticatedPurchasingRouteImport } from './routes/_authenticated/purchasing'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedSelectRouteImport } from './routes/_authenticated/select'
 import { Route as AuthenticatedShiftRouteImport } from './routes/_authenticated/shift'
@@ -98,6 +99,11 @@ const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   path: '/pos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPurchasingRoute = AuthenticatedPurchasingRouteImport.update({
+  id: '/purchasing',
+  path: '/purchasing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/mpesa': typeof AuthenticatedMpesaRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/purchasing': typeof AuthenticatedPurchasingRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/mpesa': typeof AuthenticatedMpesaRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/pos': typeof AuthenticatedPosRoute
+  '/purchasing': typeof AuthenticatedPurchasingRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/_authenticated/mpesa': typeof AuthenticatedMpesaRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
+  '/_authenticated/purchasing': typeof AuthenticatedPurchasingRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/select': typeof AuthenticatedSelectRoute
   '/_authenticated/shift': typeof AuthenticatedShiftRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/mpesa'
     | '/plan'
     | '/pos'
+    | '/purchasing'
     | '/sales'
     | '/select'
     | '/shift'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/mpesa'
     | '/plan'
     | '/pos'
+    | '/purchasing'
     | '/sales'
     | '/select'
     | '/shift'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mpesa'
     | '/_authenticated/plan'
     | '/_authenticated/pos'
+    | '/_authenticated/purchasing'
     | '/_authenticated/sales'
     | '/_authenticated/select'
     | '/_authenticated/shift'
@@ -358,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/purchasing': {
+      id: '/_authenticated/purchasing'
+      path: '/purchasing'
+      fullPath: '/purchasing'
+      preLoaderRoute: typeof AuthenticatedPurchasingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sales': {
       id: '/_authenticated/sales'
       path: '/sales'
@@ -406,6 +425,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMpesaRoute: typeof AuthenticatedMpesaRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
+  AuthenticatedPurchasingRoute: typeof AuthenticatedPurchasingRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSelectRoute: typeof AuthenticatedSelectRoute
   AuthenticatedShiftRoute: typeof AuthenticatedShiftRoute
@@ -423,6 +443,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMpesaRoute: AuthenticatedMpesaRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
+  AuthenticatedPurchasingRoute: AuthenticatedPurchasingRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSelectRoute: AuthenticatedSelectRoute,
   AuthenticatedShiftRoute: AuthenticatedShiftRoute,
