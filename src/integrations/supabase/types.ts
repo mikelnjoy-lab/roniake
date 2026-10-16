@@ -678,6 +678,146 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_versions: {
+        Row: {
+          billing_period: string
+          change_note: string | null
+          created_at: string
+          created_by: string | null
+          features: Json
+          id: string
+          max_branches: number
+          max_staff: number
+          max_terminals: number
+          plan_id: string
+          price_kes: number
+          published_at: string | null
+          published_by: string | null
+          state: string
+          version_no: number
+        }
+        Insert: {
+          billing_period: string
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          features?: Json
+          id?: string
+          max_branches: number
+          max_staff: number
+          max_terminals: number
+          plan_id: string
+          price_kes: number
+          published_at?: string | null
+          published_by?: string | null
+          state?: string
+          version_no: number
+        }
+        Update: {
+          billing_period?: string
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          features?: Json
+          id?: string
+          max_branches?: number
+          max_staff?: number
+          max_terminals?: number
+          plan_id?: string
+          price_kes?: number
+          published_at?: string | null
+          published_by?: string | null
+          state?: string
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_admins: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          note: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: number
+          payload: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: never
+          payload?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: never
+          payload?: Json
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
@@ -1766,6 +1906,126 @@ export type Database = {
           },
         ]
       }
+      subscription_events: {
+        Row: {
+          actor_user_id: string | null
+          billing_period: string | null
+          business_id: string
+          created_at: string
+          event: string
+          id: number
+          max_branches: number | null
+          max_staff: number | null
+          max_terminals: number | null
+          note: string | null
+          plan_id: string | null
+          plan_version_id: string | null
+          price_kes: number | null
+          status: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          billing_period?: string | null
+          business_id: string
+          created_at?: string
+          event: string
+          id?: never
+          max_branches?: number | null
+          max_staff?: number | null
+          max_terminals?: number | null
+          note?: string | null
+          plan_id?: string | null
+          plan_version_id?: string | null
+          price_kes?: number | null
+          status?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          billing_period?: string | null
+          business_id?: string
+          created_at?: string
+          event?: string
+          id?: never
+          max_branches?: number | null
+          max_staff?: number | null
+          max_terminals?: number | null
+          note?: string | null
+          plan_id?: string | null
+          plan_version_id?: string | null
+          price_kes?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_events_plan_version_id_fkey"
+            columns: ["plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_plans: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          current_version_id: string | null
+          description: string | null
+          id: string
+          name: string
+          sort_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          current_version_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_current_version_fk"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           business_id: string
@@ -1775,7 +2035,11 @@ export type Database = {
           max_terminals: number
           period_end: string | null
           plan: string
+          plan_id: string | null
+          plan_version_id: string | null
           status: string
+          trial_ends_at: string | null
+          updated_at: string
         }
         Insert: {
           business_id: string
@@ -1785,7 +2049,11 @@ export type Database = {
           max_terminals?: number
           period_end?: string | null
           plan?: string
+          plan_id?: string | null
+          plan_version_id?: string | null
           status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
         }
         Update: {
           business_id?: string
@@ -1795,7 +2063,11 @@ export type Database = {
           max_terminals?: number
           period_end?: string | null
           plan?: string
+          plan_id?: string | null
+          plan_version_id?: string | null
           status?: string
+          trial_ends_at?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1803,6 +2075,20 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: true
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_version_id_fkey"
+            columns: ["plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "plan_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -2014,6 +2300,10 @@ export type Database = {
         Returns: number
       }
       approve_purchase_order: { Args: { _po: string }; Returns: Json }
+      bootstrap_platform_owner: {
+        Args: { _email: string; _note?: string }
+        Returns: string
+      }
       branch_business_checked: {
         Args: { _branch: string; _permission: string }
         Returns: string
@@ -2095,6 +2385,7 @@ export type Database = {
         Returns: string
       }
       is_business_member: { Args: { _business: string }; Returns: boolean }
+      is_platform_owner: { Args: never; Returns: boolean }
       list_members: {
         Args: { _business: string }
         Returns: {
@@ -2113,6 +2404,82 @@ export type Database = {
       }
       my_open_shift: { Args: { _branch: string }; Returns: Json }
       open_shift: { Args: { _branch: string; _float: number }; Returns: string }
+      platform_assign_plan: {
+        Args: { _business: string; _note?: string; _plan: string }
+        Returns: Json
+      }
+      platform_discard_plan_draft: {
+        Args: { _plan: string }
+        Returns: undefined
+      }
+      platform_grant_owner: {
+        Args: { _email: string; _note?: string }
+        Returns: string
+      }
+      platform_list_businesses: {
+        Args: never
+        Returns: {
+          branches: number
+          business_id: string
+          created_at: string
+          current_version_no: number
+          lifecycle_state: Database["public"]["Enums"]["business_lifecycle"]
+          max_branches: number
+          max_staff: number
+          max_terminals: number
+          name: string
+          plan_id: string
+          plan_name: string
+          price_kes: number
+          staff: number
+          status: string
+          terminals: number
+          trial_ends_at: string
+          version_no: number
+        }[]
+      }
+      platform_list_owners: {
+        Args: never
+        Returns: {
+          email: string
+          granted_at: string
+          note: string
+          revoked_at: string
+          user_id: string
+        }[]
+      }
+      platform_move_subscribers: { Args: { _plan: string }; Returns: number }
+      platform_preview_plan: { Args: { _plan: string }; Returns: Json }
+      platform_publish_plan: { Args: { _plan: string }; Returns: Json }
+      platform_revoke_owner: { Args: { _user: string }; Returns: undefined }
+      platform_save_plan: {
+        Args: {
+          _code: string
+          _description: string
+          _id: string
+          _name: string
+          _sort?: number
+        }
+        Returns: string
+      }
+      platform_save_plan_draft: {
+        Args: {
+          _branches: number
+          _features: Json
+          _note: string
+          _period: string
+          _plan: string
+          _price: number
+          _staff: number
+          _terminals: number
+        }
+        Returns: string
+      }
+      platform_set_plan_status: {
+        Args: { _plan: string; _status: string }
+        Returns: undefined
+      }
+      platform_set_trial_days: { Args: { _days: number }; Returns: undefined }
       post_purchase_invoice_internal: {
         Args: {
           _biz: string
@@ -2234,6 +2601,7 @@ export type Database = {
         }
         Returns: Json
       }
+      require_platform_owner: { Args: never; Returns: undefined }
       resolve_tenant_context: {
         Args: { _branch?: string; _business: string }
         Returns: Json
@@ -2309,6 +2677,15 @@ export type Database = {
           _entity_type: string
           _payload: Json
           _request_id?: string
+        }
+        Returns: undefined
+      }
+      write_platform_audit: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _entity_type: string
+          _payload: Json
         }
         Returns: undefined
       }
