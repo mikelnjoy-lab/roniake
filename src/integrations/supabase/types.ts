@@ -369,6 +369,121 @@ export type Database = {
           },
         ]
       }
+      etims_configs: {
+        Row: {
+          branch_code: string | null
+          branch_id: string
+          business_id: string
+          device_serial: string | null
+          device_type: string
+          environment: string
+          id: string
+          kra_pin: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          branch_code?: string | null
+          branch_id: string
+          business_id: string
+          device_serial?: string | null
+          device_type?: string
+          environment?: string
+          id?: string
+          kra_pin?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          branch_code?: string | null
+          branch_id?: string
+          business_id?: string
+          device_serial?: string | null
+          device_type?: string
+          environment?: string
+          id?: string
+          kra_pin?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etims_configs_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: true
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etims_configs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      etims_transmissions: {
+        Row: {
+          attempt: number
+          branch_id: string
+          business_id: string
+          created_at: string
+          error_message: string | null
+          id: number
+          kra_invoice_no: string | null
+          sale_id: string
+          status: string
+        }
+        Insert: {
+          attempt?: number
+          branch_id: string
+          business_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: never
+          kra_invoice_no?: string | null
+          sale_id: string
+          status: string
+        }
+        Update: {
+          attempt?: number
+          branch_id?: string
+          business_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: never
+          kra_invoice_no?: string | null
+          sale_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "etims_transmissions_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etims_transmissions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etims_transmissions_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       idempotency_keys: {
         Row: {
           actor_user_id: string
@@ -1182,6 +1297,91 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          business_id: string
+          created_at: string
+          max_branches: number
+          max_staff: number
+          max_terminals: number
+          period_end: string | null
+          plan: string
+          status: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          max_branches?: number
+          max_staff?: number
+          max_terminals?: number
+          period_end?: string | null
+          plan?: string
+          status?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          max_branches?: number
+          max_staff?: number
+          max_terminals?: number
+          period_end?: string | null
+          plan?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: true
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_grants: {
+        Row: {
+          business_id: string
+          expires_at: string
+          granted_at: string
+          granted_by: string
+          id: string
+          reason: string
+          revoked_at: string | null
+          revoked_by: string | null
+          scope: string
+        }
+        Insert: {
+          business_id: string
+          expires_at: string
+          granted_at?: string
+          granted_by: string
+          id?: string
+          reason: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scope: string
+        }
+        Update: {
+          business_id?: string
+          expires_at?: string
+          granted_at?: string
+          granted_by?: string
+          id?: string
+          reason?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          scope?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_grants_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1264,6 +1464,15 @@ export type Database = {
       }
       create_business: {
         Args: { _branch_code?: string; _branch_name: string; _name: string }
+        Returns: string
+      }
+      grant_support_access: {
+        Args: {
+          _business: string
+          _hours: number
+          _reason: string
+          _scope: string
+        }
         Returns: string
       }
       has_permission: {
@@ -1365,6 +1574,19 @@ export type Database = {
         Args: { _branch?: string; _business: string }
         Returns: Json
       }
+      revoke_support_access: { Args: { _grant: string }; Returns: undefined }
+      save_etims_config: {
+        Args: {
+          _branch: string
+          _branch_code: string
+          _device_serial: string
+          _device_type: string
+          _environment: string
+          _kra_pin: string
+          _status: string
+        }
+        Returns: string
+      }
       save_mpesa_config: {
         Args: {
           _account_format: string
@@ -1378,6 +1600,7 @@ export type Database = {
         }
         Returns: string
       }
+      subscription_overview: { Args: { _business: string }; Returns: Json }
       void_sale: { Args: { _reason: string; _sale: string }; Returns: Json }
       write_audit: {
         Args: {

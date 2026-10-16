@@ -64,6 +64,13 @@
       "when": 1792105131661,
       "tag": "0008_mpesa_config_and_reconciliation",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792122342214,
+      "tag": "0009_etims_subscription_support",
+      "breakpoints": true
     }
   ]
 }
