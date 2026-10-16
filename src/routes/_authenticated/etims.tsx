@@ -78,7 +78,7 @@ function Etims() {
       </div>
 
       <section className="mb-6 rounded-lg border-4 border-foreground bg-card p-4">
-        <h2 className="mb-3 text-xl font-black">KRA connection profile — {tenant.branch_name}</h2>
+        <h2 className="mb-3 text-xl font-black">KRA connection profile</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="font-bold">KRA PIN<Input className="h-12 text-lg uppercase" value={f.pin} disabled={!configure} placeholder="P051234567X" onChange={(e) => setF({ ...f, pin: e.target.value.toUpperCase() })} /></label>
           <label className="font-bold">KRA branch code<Input className="h-12 text-lg uppercase" value={f.code} disabled={!configure} placeholder="00" onChange={(e) => setF({ ...f, code: e.target.value.toUpperCase() })} /></label>
