@@ -22,6 +22,7 @@ import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedInventoryRouteImport } from './routes/_authenticated/inventory'
 import { Route as AuthenticatedMpesaRouteImport } from './routes/_authenticated/mpesa'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
+import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPurchasingRouteImport } from './routes/_authenticated/purchasing'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
@@ -94,6 +95,11 @@ const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
   path: '/plan',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlatformRoute = AuthenticatedPlatformRouteImport.update({
+  id: '/platform',
+  path: '/platform',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPosRoute = AuthenticatedPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mpesa': typeof AuthenticatedMpesaRoute
   '/plan': typeof AuthenticatedPlanRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchasing': typeof AuthenticatedPurchasingRoute
   '/sales': typeof AuthenticatedSalesRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/inventory': typeof AuthenticatedInventoryRoute
   '/mpesa': typeof AuthenticatedMpesaRoute
   '/plan': typeof AuthenticatedPlanRoute
+  '/platform': typeof AuthenticatedPlatformRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchasing': typeof AuthenticatedPurchasingRoute
   '/sales': typeof AuthenticatedSalesRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory': typeof AuthenticatedInventoryRoute
   '/_authenticated/mpesa': typeof AuthenticatedMpesaRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
+  '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/purchasing': typeof AuthenticatedPurchasingRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/mpesa'
     | '/plan'
+    | '/platform'
     | '/pos'
     | '/purchasing'
     | '/sales'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/mpesa'
     | '/plan'
+    | '/platform'
     | '/pos'
     | '/purchasing'
     | '/sales'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory'
     | '/_authenticated/mpesa'
     | '/_authenticated/plan'
+    | '/_authenticated/platform'
     | '/_authenticated/pos'
     | '/_authenticated/purchasing'
     | '/_authenticated/sales'
@@ -363,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/platform': {
+      id: '/_authenticated/platform'
+      path: '/platform'
+      fullPath: '/platform'
+      preLoaderRoute: typeof AuthenticatedPlatformRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pos': {
       id: '/_authenticated/pos'
       path: '/pos'
@@ -424,6 +443,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInventoryRoute: typeof AuthenticatedInventoryRoute
   AuthenticatedMpesaRoute: typeof AuthenticatedMpesaRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
+  AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedPurchasingRoute: typeof AuthenticatedPurchasingRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
@@ -442,6 +462,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInventoryRoute: AuthenticatedInventoryRoute,
   AuthenticatedMpesaRoute: AuthenticatedMpesaRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
+  AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedPurchasingRoute: AuthenticatedPurchasingRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
