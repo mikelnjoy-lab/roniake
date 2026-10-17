@@ -251,6 +251,6 @@ declare rep text; p int; f int;
 begin
   perform pg_temp.as_admin();
   select count(*) filter (where passed), count(*) filter (where not passed) into p, f from t_results;
-  select string_agg(case when passed then 'PASS ' else 'FAIL ' end || test || coalesce(' ['||detail||']',''), E'\n' order by id) into rep from t_results;
+  select string_agg(case when passed then 'PASS ' else 'FAIL ' end || test || coalesce(' ['||detail||']',''), E'\n' order by passed, id) into rep from t_results;
   raise exception E'PLATFORM_REPORT passed=% failed=% total=%\n%', p, f, p+f, rep;
 end $$;
