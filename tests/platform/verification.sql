@@ -124,14 +124,17 @@ begin
   -- existing subscriber behaviour
   perform pg_temp.as_user(up);
   r := public.platform_assign_plan(biz_a, plan, 'pilot customer');
+  perform pg_temp.as_admin();
   select max_branches, max_staff, status into n, x, st from public.subscriptions where business_id = biz_a;
   perform pg_temp.ok('SUB-01 assigning plan copies limits and activates', n = 1 and x = 2 and st = 'active' and (r->>'price_kes')::numeric = 1200, r::text);
+  perform pg_temp.as_user(up);
   perform public.platform_save_plan_draft(plan, 1500, 'month', 2, 3, 4, '{"deni":true}', 'price rise');
   r := public.platform_preview_plan(plan);
   perform pg_temp.ok('SUB-02 preview shows 1 subscriber, 0 changed on publish', (r->>'current_subscribers')::int = 1 and (r->>'subscribers_changed_on_publish')::int = 0
     and jsonb_array_length(r->'changes') = 5, r::text);
   r := public.platform_publish_plan(plan);
   v2 := (r->>'version_id')::uuid;
+  perform pg_temp.as_admin();
   select max_branches, (select price_kes from public.plan_versions where id = s.plan_version_id) into n, x from public.subscriptions s where business_id = biz_a;
   perform pg_temp.ok('SUB-03 existing subscriber keeps old price 1200 and limit 1 after publish', n = 1 and x = 1200, n || '/' || x);
   perform pg_temp.ok('SUB-04 old version price unchanged in history', (select price_kes from public.plan_versions where id = v1) = 1200);
@@ -140,11 +143,14 @@ begin
   perform pg_temp.ok('SUB-05 merchant told a newer version exists', (r->>'newer_version_available')::boolean, r::text);
   perform pg_temp.as_user(up);
   perform pg_temp.ok('SUB-06 explicit move updates 1 subscriber', public.platform_move_subscribers(plan) = 1);
+  perform pg_temp.as_admin();
   select max_branches, max_terminals, max_staff into n, x, msg from public.subscriptions where business_id = biz_a;
   perform pg_temp.ok('SUB-07 moved subscriber has new limits 2/3/4', n = 2 and x = 3 and msg = '4');
   select count(*) into n from public.subscription_events where business_id = biz_a and event in ('plan_assigned','version_moved');
   perform pg_temp.ok('SUB-08 billing history keeps both events', n = 2);
+  perform pg_temp.as_user(up);
   perform pg_temp.ok('SUB-09 moving again changes nobody', public.platform_move_subscribers(plan) = 0);
+  perform pg_temp.as_admin();
   select status into st from public.subscriptions where business_id = biz_b;
   perform pg_temp.ok('SUB-10 other business untouched (still trial)', st = 'trial');
 
@@ -204,7 +210,9 @@ begin
   perform pg_temp.ok('ARCH-02 archived plan cannot be edited', raised);
   begin perform public.platform_assign_plan(biz_b, plan, null); raised := false; exception when others then raised := true; end;
   perform pg_temp.ok('ARCH-03 archived plan cannot be assigned', raised);
+  perform pg_temp.as_admin();
   perform pg_temp.ok('ARCH-04 existing subscriber keeps archived plan', (select plan_id from public.subscriptions where business_id = biz_a) = plan);
+  perform pg_temp.as_user(up);
   perform public.platform_set_trial_days(7);
   perform pg_temp.as_user(ub);
   biz_c := public.create_business('Plat Test C', 'C1', 'PTC1');
