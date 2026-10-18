@@ -83,7 +83,7 @@ function Plans() {
   const qc = useQueryClient();
   async function create() {
     const { data, error } = await supabase.rpc("platform_save_plan", { _id: null as unknown as string, _code: code, _name: name, _description: "" });
-    if (error) return err(error);
+    if (error) { err(error); return; }
     toast.success("Plan created as draft"); setCode(""); setName(""); setOpenId(data as string);
     qc.invalidateQueries({ queryKey: ["pf-plans"] });
   }
@@ -147,7 +147,7 @@ function PlanEditor({ plan }: { plan: PlanRow }) {
   const saveDraft = () => call(() => supabase.rpc("platform_save_plan_draft", { _plan: plan.id, _price: Number(price), _period: period, _branches: Number(br), _terminals: Number(ti), _staff: Number(st), _features: feat, _note: note }), "Draft saved — preview, then publish");
   async function doPreview() {
     const { data, error } = await supabase.rpc("platform_preview_plan", { _plan: plan.id });
-    if (error) return err(error); setPreview(data as unknown as Preview);
+    if (error) { err(error); return; } setPreview(data as unknown as Preview);
   }
   async function publish() {
     if (!confirm("Publish this version? New sign-ups get it now. Existing subscribers are not changed.")) return;
@@ -160,7 +160,7 @@ function PlanEditor({ plan }: { plan: PlanRow }) {
   async function move() {
     if (!confirm("Move every subscriber of this plan to the latest published price and limits?")) return;
     const { data, error } = await supabase.rpc("platform_move_subscribers", { _plan: plan.id });
-    if (error) return err(error); toast.success(`${data} subscriber(s) moved`); refresh(); qc.invalidateQueries({ queryKey: ["pf-biz"] });
+    if (error) { err(error); return; } toast.success(`${data} subscriber(s) moved`); refresh(); qc.invalidateQueries({ queryKey: ["pf-biz"] });
   }
 
   return (
@@ -237,11 +237,11 @@ function Businesses() {
   const [pick, setPick] = useState<Record<string, string>>({});
   const active = (plans.data ?? []).filter((p) => p.status === "active");
   async function assign(id: string, name: string) {
-    const plan = pick[id]; if (!plan) return toast.error("Choose a plan");
+    const plan = pick[id]; if (!plan) { toast.error("Choose a plan"); return; }
     const p = active.find((x) => x.id === plan);
     if (!confirm(`Put ${name} on ${p?.name}? No payment is taken by RONIA here.`)) return;
     const { error } = await supabase.rpc("platform_assign_plan", { _business: id, _plan: plan, _note: "" });
-    if (error) return err(error); toast.success("Plan assigned"); qc.invalidateQueries({ queryKey: ["pf-biz"] });
+    if (error) { err(error); return; } toast.success("Plan assigned"); qc.invalidateQueries({ queryKey: ["pf-biz"] });
   }
   return (
     <div className="space-y-3">
@@ -278,16 +278,16 @@ function Owners() {
   async function grant() {
     if (!confirm(`Give ${email} full RONIA platform owner access?`)) return;
     const { error } = await supabase.rpc("platform_grant_owner", { _email: email, _note: "added from admin area" });
-    if (error) return err(error); toast.success("Platform owner added"); setEmail(""); qc.invalidateQueries({ queryKey: ["pf-owners"] });
+    if (error) { err(error); return; } toast.success("Platform owner added"); setEmail(""); qc.invalidateQueries({ queryKey: ["pf-owners"] });
   }
   async function revoke(id: string) {
     if (!confirm("Remove this platform owner?")) return;
     const { error } = await supabase.rpc("platform_revoke_owner", { _user: id });
-    if (error) return err(error); toast.success("Removed"); qc.invalidateQueries({ queryKey: ["pf-owners"] });
+    if (error) { err(error); return; } toast.success("Removed"); qc.invalidateQueries({ queryKey: ["pf-owners"] });
   }
   async function saveTrial() {
     const { error } = await supabase.rpc("platform_set_trial_days", { _days: Number(days) });
-    if (error) return err(error); toast.success("Trial length saved for new sign-ups"); setDays(""); qc.invalidateQueries({ queryKey: ["pf-trial"] });
+    if (error) { err(error); return; } toast.success("Trial length saved for new sign-ups"); setDays(""); qc.invalidateQueries({ queryKey: ["pf-trial"] });
   }
   return (
     <div className="space-y-4">
