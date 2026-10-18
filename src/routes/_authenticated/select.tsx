@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -74,6 +74,8 @@ function SelectPage() {
   if (list.length === 0) {
     return (
       <AppShell>
+      <PlatformLink />
+        <PlatformLink />
         <CreateBusiness onCreated={(id) => { qc.invalidateQueries({ queryKey: ["my-memberships"] }); setBusinessId(id); }} />
       </AppShell>
     );
@@ -82,6 +84,8 @@ function SelectPage() {
   if (!businessId) {
     return (
       <AppShell>
+      <PlatformLink />
+        <PlatformLink />
         <h1 className="mb-4 text-3xl font-black">Choose business</h1>
         <div className="flex flex-col gap-3">
           {list.map((m) => (
@@ -95,6 +99,7 @@ function SelectPage() {
   const biz = list.find((m) => m.business_id === businessId);
   return (
     <AppShell>
+      <PlatformLink />
       {list.length > 1 && (
         <button className="mb-2 font-bold underline" onClick={() => setBusinessId(null)}>← All businesses</button>
       )}
@@ -152,5 +157,16 @@ function CreateBusiness({ onCreated }: { onCreated: (id: string) => void }) {
       <div className="flex flex-col gap-2"><Label className="font-bold">Branch code (on receipts)</Label><Input required maxLength={8} pattern="[A-Za-z0-9]+" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="h-14 border-2 text-lg uppercase" /></div>
       <Button type="submit" disabled={busy} size="lg" className="h-16 text-xl font-black">Create business</Button>
     </form>
+  );
+}
+
+// Shown only to RONIA platform owners; the admin area re-checks on the server.
+function PlatformLink() {
+  const q = useQuery({ queryKey: ["is-platform-owner"], queryFn: async () => (await supabase.rpc("is_platform_owner")).data === true });
+  if (!q.data) return null;
+  return (
+    <Link to="/platform" className="mb-4 block rounded-lg border-4 border-foreground bg-foreground p-4 text-lg font-black text-background">
+      RONIA Platform Admin →
+    </Link>
   );
 }
