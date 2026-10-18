@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/plan")({
   component: Plan,
 });
 
-type Overview = { plan: string; status: string; period_end: string | null; max_branches: number; max_terminals: number; max_staff: number; branches: number; staff: number; terminals: number };
+type Overview = { plan: string; status: string; period_end: string | null; trial_ends_at: string | null; price_kes: number | null; billing_period: string | null; newer_version_available: boolean; max_branches: number; max_terminals: number; max_staff: number; branches: number; staff: number; terminals: number };
 
 function Meter({ label, used, max }: { label: string; used: number; max: number }) {
   const pct = Math.min(100, Math.round((used / Math.max(max, 1)) * 100));
@@ -74,8 +74,11 @@ function Plan() {
       {o && (
         <section className="mb-6">
           <div className="mb-3 rounded-lg border-4 border-foreground bg-secondary p-4 text-secondary-foreground">
-            <p className="text-2xl font-black capitalize">{o.plan} plan · {o.status.replace("_", " ")}</p>
+            <p className="text-2xl font-black capitalize">{o.plan} · {o.status.replace("_", " ")}</p>
+            {o.price_kes != null && <p className="font-bold">KES {Number(o.price_kes).toLocaleString()} per {o.billing_period}</p>}
+            {o.status === "trial" && <p className="font-bold">{o.trial_ends_at ? `Free trial ends ${new Date(o.trial_ends_at).toLocaleDateString()}` : "Pilot trial"}</p>}
             {o.period_end && <p className="font-bold">Renews {new Date(o.period_end).toLocaleDateString()}</p>}
+            {o.newer_version_available && <p className="text-sm font-bold">RONIA has updated this plan; your current price and limits stay until RONIA moves you.</p>}
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <Meter label="Branches" used={o.branches} max={o.max_branches} />
