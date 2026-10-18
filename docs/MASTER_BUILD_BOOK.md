@@ -162,3 +162,13 @@ Test totals: phase0 49/49, phase1 47/47, phase2 57/57, phase3 16/16, phase4 42/4
 Purchasing round notes: direct invoice receiving and order receiving now share one internal posting routine, so WAC, stock movements, duplicate-invoice blocking and audit are identical for both. Historical invoice costs and COGS untouched; actual invoice cost (not order cost) feeds WAC.
 
 Remaining order: (1) support staff sign-in (needs decision), (2) practice backup restore (needs owner action), (3) browser tests for offline sync, till, reports, purchasing.
+
+## Platform-owner administration & plan management — 🔵 VERIFIED (database, 2026-10-17); admin screen built, live sign-in pending owner account
+- Separate RONIA Platform Owner role (`platform_admins`), not a business membership: grants no access to merchant sales, stock, staff or customers (ISO-03..06).
+- Bootstrap: `bootstrap_platform_owner(email)` runs only by the database operator, only for a confirmed account, only while no owner exists; audited. No public sign-up path, no hard-coded email or password, no RLS bypass. Further owners added/removed from the admin area; last owner cannot be removed.
+- Plans in the database (`subscription_plans`, immutable published `plan_versions`): create, edit, draft → preview → publish, activate/deactivate/archive, version history. Defaults: Starter KES 999/mo 1/1/3, Business KES 2,499/mo 3/5/10, Growth KES 4,999/mo 10/15/30 (editable). Trial length in `platform_settings` (14 days); new businesses get a dated trial; the existing two shops keep their pilot trial with no end date (real data untouched).
+- Existing-subscriber rule: publishing never changes current subscribers; they keep their price/limits until the platform owner explicitly moves them. No payments are taken — editing a price charges nobody. Billing history in immutable `subscription_events`.
+- Quotas on the server: adding a branch or activating staff beyond the plan is refused; lowering a limit removes nothing; tills are reported over limit but sales are never refused.
+- Feature flags are stored per version but not yet used to hide features.
+- Evidence: `tests/platform/verification.sql` — 67/67 passed (rolled back). Earlier suites not re-run; their fixtures stay within trial limits (≤2 branches, ≤10 staff).
+- Pending: platform owner's real email for bootstrap; browser check of `/platform` after bootstrap.
