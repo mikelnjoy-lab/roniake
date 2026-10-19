@@ -1,0 +1,1 @@
+select public.bootstrap_platform_owner('michaelmwangi2@gmail.com', 'Initial RONIA platform owner (one-time bootstrap)');
