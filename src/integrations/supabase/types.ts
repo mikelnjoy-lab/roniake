@@ -68,6 +68,84 @@ export type Database = {
           },
         ]
       }
+      branch_receipt_settings: {
+        Row: {
+          address: string | null
+          auto_print: boolean
+          branch_id: string
+          business_id: string
+          copies: number
+          display_name: string | null
+          footer: string | null
+          logo_url: string | null
+          paper_width: number
+          phone: string | null
+          show_address: boolean
+          show_cashier: boolean
+          show_footer: boolean
+          show_logo: boolean
+          show_phone: boolean
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          address?: string | null
+          auto_print?: boolean
+          branch_id: string
+          business_id: string
+          copies?: number
+          display_name?: string | null
+          footer?: string | null
+          logo_url?: string | null
+          paper_width?: number
+          phone?: string | null
+          show_address?: boolean
+          show_cashier?: boolean
+          show_footer?: boolean
+          show_logo?: boolean
+          show_phone?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          address?: string | null
+          auto_print?: boolean
+          branch_id?: string
+          business_id?: string
+          copies?: number
+          display_name?: string | null
+          footer?: string | null
+          logo_url?: string | null
+          paper_width?: number
+          phone?: string | null
+          show_address?: boolean
+          show_cashier?: boolean
+          show_footer?: boolean
+          show_logo?: boolean
+          show_phone?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_receipt_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: true
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_receipt_settings_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_stock: {
         Row: {
           branch_id: string
@@ -1545,6 +1623,7 @@ export type Database = {
           id: string
           payload_hash: string
           receipt_no: string
+          receipt_snapshot: Json | null
           status: string
           subtotal: number
           tax_total: number
@@ -1565,6 +1644,7 @@ export type Database = {
           id?: string
           payload_hash: string
           receipt_no: string
+          receipt_snapshot?: Json | null
           status?: string
           subtotal: number
           tax_total: number
@@ -1585,6 +1665,7 @@ export type Database = {
           id?: string
           payload_hash?: string
           receipt_no?: string
+          receipt_snapshot?: Json | null
           status?: string
           subtotal?: number
           tax_total?: number
@@ -2618,6 +2699,10 @@ export type Database = {
         Returns: Json
       }
       revoke_support_access: { Args: { _grant: string }; Returns: undefined }
+      save_branch_receipt_settings: {
+        Args: { _branch: string; _s: Json }
+        Returns: number
+      }
       save_etims_config: {
         Args: {
           _branch: string
