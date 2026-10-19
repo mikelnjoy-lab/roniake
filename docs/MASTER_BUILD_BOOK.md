@@ -172,3 +172,11 @@ Remaining order: (1) support staff sign-in (needs decision), (2) practice backup
 - Feature flags are stored per version but not yet used to hide features.
 - Evidence: `tests/platform/verification.sql` — 67/67 passed (rolled back). Earlier suites not re-run; their fixtures stay within trial limits (≤2 branches, ≤10 staff).
 - Pending: platform owner's real email for bootstrap; browser check of `/platform` after bootstrap.
+
+## Platform owner bootstrap — 2026-10-19 (actual results)
+- Pre-check: 0 platform owners existed; account michaelmwangi2@gmail.com confirmed, 0 merchant memberships.
+- Bootstrap: `bootstrap_platform_owner` run once (migration 0016). Audit row `platform.bootstrap` written. No signup path added; RLS unchanged.
+- DB suite `tests/platform/live_owner_verification.sql` (forced rollback): **18/18 passed** — single owner, no merchant memberships, bootstrap not repeatable, owner cannot read merchant sales/products/Deni/shifts, admin change audited, merchant owner blocked from listing merchants, trial change, granting owners, publishing plans, reading platform audit, self-insert.
+- Browser (Playwright, localhost): platform owner reached `/platform`; Plans, Merchants (plan/usage only), Owners & trial, Audit tabs rendered with no page errors. Merchant owner opening `/platform` was redirected to `/unauthorized`. **VERIFIED.**
+- Observation: Main Enterprises shows Tills 4/3 (over trial limit) — existing data, untouched.
+- Real merchant data and open shifts not modified.
