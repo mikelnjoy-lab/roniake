@@ -25,6 +25,7 @@ import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedPlatformRouteImport } from './routes/_authenticated/platform'
 import { Route as AuthenticatedPosRouteImport } from './routes/_authenticated/pos'
 import { Route as AuthenticatedPurchasingRouteImport } from './routes/_authenticated/purchasing'
+import { Route as AuthenticatedReceiptSettingsRouteImport } from './routes/_authenticated/receipt-settings'
 import { Route as AuthenticatedSalesRouteImport } from './routes/_authenticated/sales'
 import { Route as AuthenticatedSelectRouteImport } from './routes/_authenticated/select'
 import { Route as AuthenticatedShiftRouteImport } from './routes/_authenticated/shift'
@@ -110,6 +111,12 @@ const AuthenticatedPurchasingRoute = AuthenticatedPurchasingRouteImport.update({
   path: '/purchasing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReceiptSettingsRoute =
+  AuthenticatedReceiptSettingsRouteImport.update({
+    id: '/receipt-settings',
+    path: '/receipt-settings',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSalesRoute = AuthenticatedSalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/platform': typeof AuthenticatedPlatformRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchasing': typeof AuthenticatedPurchasingRoute
+  '/receipt-settings': typeof AuthenticatedReceiptSettingsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
@@ -174,6 +182,7 @@ export interface FileRoutesByTo {
   '/platform': typeof AuthenticatedPlatformRoute
   '/pos': typeof AuthenticatedPosRoute
   '/purchasing': typeof AuthenticatedPurchasingRoute
+  '/receipt-settings': typeof AuthenticatedReceiptSettingsRoute
   '/sales': typeof AuthenticatedSalesRoute
   '/select': typeof AuthenticatedSelectRoute
   '/shift': typeof AuthenticatedShiftRoute
@@ -198,6 +207,7 @@ export interface FileRoutesById {
   '/_authenticated/platform': typeof AuthenticatedPlatformRoute
   '/_authenticated/pos': typeof AuthenticatedPosRoute
   '/_authenticated/purchasing': typeof AuthenticatedPurchasingRoute
+  '/_authenticated/receipt-settings': typeof AuthenticatedReceiptSettingsRoute
   '/_authenticated/sales': typeof AuthenticatedSalesRoute
   '/_authenticated/select': typeof AuthenticatedSelectRoute
   '/_authenticated/shift': typeof AuthenticatedShiftRoute
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/pos'
     | '/purchasing'
+    | '/receipt-settings'
     | '/sales'
     | '/select'
     | '/shift'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/platform'
     | '/pos'
     | '/purchasing'
+    | '/receipt-settings'
     | '/sales'
     | '/select'
     | '/shift'
@@ -267,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/platform'
     | '/_authenticated/pos'
     | '/_authenticated/purchasing'
+    | '/_authenticated/receipt-settings'
     | '/_authenticated/sales'
     | '/_authenticated/select'
     | '/_authenticated/shift'
@@ -396,6 +409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPurchasingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/receipt-settings': {
+      id: '/_authenticated/receipt-settings'
+      path: '/receipt-settings'
+      fullPath: '/receipt-settings'
+      preLoaderRoute: typeof AuthenticatedReceiptSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/sales': {
       id: '/_authenticated/sales'
       path: '/sales'
@@ -446,6 +466,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlatformRoute: typeof AuthenticatedPlatformRoute
   AuthenticatedPosRoute: typeof AuthenticatedPosRoute
   AuthenticatedPurchasingRoute: typeof AuthenticatedPurchasingRoute
+  AuthenticatedReceiptSettingsRoute: typeof AuthenticatedReceiptSettingsRoute
   AuthenticatedSalesRoute: typeof AuthenticatedSalesRoute
   AuthenticatedSelectRoute: typeof AuthenticatedSelectRoute
   AuthenticatedShiftRoute: typeof AuthenticatedShiftRoute
@@ -465,6 +486,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlatformRoute: AuthenticatedPlatformRoute,
   AuthenticatedPosRoute: AuthenticatedPosRoute,
   AuthenticatedPurchasingRoute: AuthenticatedPurchasingRoute,
+  AuthenticatedReceiptSettingsRoute: AuthenticatedReceiptSettingsRoute,
   AuthenticatedSalesRoute: AuthenticatedSalesRoute,
   AuthenticatedSelectRoute: AuthenticatedSelectRoute,
   AuthenticatedShiftRoute: AuthenticatedShiftRoute,
