@@ -145,6 +145,7 @@ function Pos() {
   };
   const next = () => { setCart([]); setCustomerId(""); setTenders([{ type: "cash", amount: "", reference: "" }]); setPaying(false); setDone(null); setTimeout(() => scanRef.current?.focus(), 50); };
   const receipt = useQuery({ queryKey: ["receipt", done?.saleId], enabled: !!done?.saleId, queryFn: () => loadReceipt(supabase, done!.saleId!) });
+  useEffect(() => { if (receipt.data?.settings?.auto_print) setTimeout(() => window.print(), 300); }, [receipt.data?.receipt_no]);
 
   if (!shift.isLoading && !shift.data) return (
     <AppShell><div className="rounded-xl border-4 border-foreground bg-secondary p-6 text-center text-secondary-foreground">
