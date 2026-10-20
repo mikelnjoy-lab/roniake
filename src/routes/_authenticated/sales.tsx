@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ function Sales() {
     },
   });
   const receipt = useQuery({ queryKey: ["receipt", open], enabled: !!open, queryFn: () => loadReceipt(supabase, open!) });
+  useEffect(() => { const w = receipt.data?.settings?.paper_width; if (w) setWidth(w); }, [receipt.data]);
   const voided = sales.data?.voided ?? new Set<string>();
   const all = sales.data?.sales ?? [];
   const s = all.filter((x) => !voided.has(x.id));

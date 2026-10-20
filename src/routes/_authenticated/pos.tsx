@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell, useOnline } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Receipt, loadReceipt } from "@/components/Receipt";
+import { Receipt, loadReceipt, branchReceiptSettingsQuery } from "@/components/Receipt";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
 import { deviceId, dismissFailed, isNetworkError, listPending, putPending, submitSale, syncPending, type PendingSale } from "@/lib/offline-queue";
@@ -50,6 +50,8 @@ function Pos() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ saleId?: string; pending?: boolean; change?: number } | null>(null);
   const [width, setWidth] = useState<58 | 80>(80);
+  const rset = useQuery(branchReceiptSettingsQuery(supabase, branch));
+  useEffect(() => { if (rset.data?.paper_width) setWidth(rset.data.paper_width); }, [rset.data?.paper_width]);
   const [pending, setPending] = useState(0);
   const [failedSales, setFailedSales] = useState<PendingSale[]>([]);
   const [held, setHeld] = useState<{ at: string; cart: Line[] }[]>([]);
@@ -143,6 +145,7 @@ function Pos() {
   };
   const next = () => { setCart([]); setCustomerId(""); setTenders([{ type: "cash", amount: "", reference: "" }]); setPaying(false); setDone(null); setTimeout(() => scanRef.current?.focus(), 50); };
   const receipt = useQuery({ queryKey: ["receipt", done?.saleId], enabled: !!done?.saleId, queryFn: () => loadReceipt(supabase, done!.saleId!) });
+  useEffect(() => { if (receipt.data?.settings?.auto_print) setTimeout(() => window.print(), 300); }, [receipt.data?.receipt_no]);
 
   if (!shift.isLoading && !shift.data) return (
     <AppShell><div className="rounded-xl border-4 border-foreground bg-secondary p-6 text-center text-secondary-foreground">

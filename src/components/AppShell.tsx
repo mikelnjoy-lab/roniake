@@ -43,6 +43,7 @@ const NAV = [
   { to: "/etims", label: "eTIMS" },
   { to: "/dashboard", label: "Reports" },
   { to: "/staff", label: "Staff" },
+  { to: "/receipt-settings", label: "Receipt" },
   { to: "/plan", label: "Plan" },
 ] as const;
 
