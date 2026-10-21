@@ -15,8 +15,8 @@ export type ReceiptData = {
   tenders: { tender_type: string; amount: number; reference: string | null }[];
   subtotal: number; discount_total: number; tax_total: number; total: number; change_given: number;
   void?: { reason: string; voided_at: string } | null;
-  returns?: { return_no: string; refund_amount: number; created_at: string }[];
-  kra_pin?: string | null;
+  returns?: { return_no: string; refund_amount: number; created_at: string }[] | undefined;
+  kra_pin?: string | null | undefined;
   cashier?: string | null;
   settings?: ReceiptSettings | null;
   sample?: boolean;

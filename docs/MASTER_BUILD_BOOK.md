@@ -180,3 +180,12 @@ Remaining order: (1) support staff sign-in (needs decision), (2) practice backup
 - Browser (Playwright, localhost): platform owner reached `/platform`; Plans, Merchants (plan/usage only), Owners & trial, Audit tabs rendered with no page errors. Merchant owner opening `/platform` was redirected to `/unauthorized`. **VERIFIED.**
 - Observation: Main Enterprises shows Tills 4/3 (over trial limit) — existing data, untouched.
 - Real merchant data and open shifts not modified.
+
+## Branch-specific receipt settings — 2026-10-20 (actual results)
+- Each branch has its own receipt setup (trading name, phone, address, footer, logo link, optional sections, 58/80mm, auto-print, copies). New branches get safe defaults automatically; existing branches were backfilled.
+- Edits only via a server function requiring `branch.manage` plus branch access (Owner/Manager under the locked model, where Managers cover all branches of their Business). Cashiers/Auditors read own-branch only. Every change audited.
+- Each new sale freezes the branch settings into the sale at posting time; reprints use that frozen copy, so later edits never change past receipts or financial records. Sales before this change fall back to current branch settings.
+- Totals, VAT, tenders, change, receipt number, void banner, returns, Deni notice, eTIMS status and "not a KRA fiscal invoice" always print; legal business name and KRA PIN always come from the Business.
+- Tests: `tests/receipts/verification.sql` — 27/27 passed (rollback-only). First run 24/27: 3 failures were test assumptions (expected Managers to be limited to assigned branches, which contradicts the locked Phase 0 model); checks corrected, no code change.
+- ✅ Verified: isolation, permissions, defaults, snapshots with split, Deni, void, partial return, reprint stability, validation.
+- ⬜ Not verified: physical printer output (58/80mm on real hardware); 58/80mm on-screen layout checked only by browser screenshot where noted; eTIMS/KRA fiscal integration remains not live.
