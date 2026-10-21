@@ -57,10 +57,9 @@ begin
   perform pg_temp.as_user(um);
   begin perform public.save_branch_receipt_settings(br_a, '{"display_name":"Mgr edit","paper_width":80}'); raised := false; exception when others then raised := true; msg := sqlerrm; end;
   perform pg_temp.ok('PERM-02 manager can edit assigned branch', not raised, msg);
-  begin perform public.save_branch_receipt_settings(br_b, '{"display_name":"hack"}'); raised := false; exception when others then raised := true; end;
-  perform pg_temp.ok('PERM-03 manager cannot edit unassigned branch', raised);
-  select count(*) into n from public.branch_receipt_settings where branch_id = br_b;
-  perform pg_temp.ok('PERM-04 manager cannot even read unassigned branch settings', n = 0, n::text);
+  -- Locked model: Managers manage all branches of their Business (Phase 0).
+  begin perform public.save_branch_receipt_settings(br_b, '{"display_name":"Makaa Bora","paper_width":80}'); raised := false; exception when others then raised := true; end;
+  perform pg_temp.ok('PERM-03 manager may manage any branch of own Business (locked model)', not raised);
 
   -- cashier: read only
   perform pg_temp.as_user(uc);
@@ -68,6 +67,8 @@ begin
   perform pg_temp.ok('PERM-05 cashier cannot edit receipt settings', raised);
   select count(*) into n from public.branch_receipt_settings where branch_id = br_a;
   perform pg_temp.ok('PERM-06 cashier can read own branch settings for printing', n = 1);
+  select count(*) into n from public.branch_receipt_settings where branch_id = br_b;
+  perform pg_temp.ok('PERM-04 cashier cannot read settings of a branch not assigned', n = 0, n::text);
   begin update public.branch_receipt_settings set footer = 'x' where branch_id = br_a; get diagnostics n = row_count; raised := n = 0; exception when others then raised := true; end;
   perform pg_temp.ok('PERM-07 no direct table writes (RPC only)', raised);
 
@@ -81,7 +82,7 @@ begin
   -- audit
   perform pg_temp.as_admin();
   select count(*) into n from public.audit_log where business_id = biz and action = 'branch.receipt_settings_updated';
-  perform pg_temp.ok('AUD-01 every settings change audited', n = 3, n::text);
+  perform pg_temp.ok('AUD-01 every settings change audited', n = 4, n::text);
 
   -- sales: snapshot frozen
   perform pg_temp.as_user(uo);
