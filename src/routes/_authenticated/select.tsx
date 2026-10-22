@@ -116,6 +116,9 @@ function SelectPage() {
           <BigRow key={b.id} icon={<MapPin />} title={b.name} sub={b.code} onClick={() => enter(b.id)} />
         ))}
       </div>
+      {(biz?.role === "owner" || biz?.role === "manager") && (
+        <AddBranch businessId={businessId} onCreated={() => qc.invalidateQueries({ queryKey: ["branches", businessId] })} />
+      )}
     </AppShell>
   );
 }
@@ -130,6 +133,39 @@ function BigRow({ icon, title, sub, onClick }: { icon: React.ReactNode; title: s
       </span>
       <ChevronRight className="size-8" />
     </button>
+  );
+}
+
+// Server decides: branches INSERT policy requires branch.manage; plan branch quota and
+// receipt-settings defaults are applied by database triggers.
+function AddBranch({ businessId, onCreated }: { businessId: string; onCreated: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [address, setAddress] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.from("branches").insert({ business_id: businessId, name: name.trim(), code: code.trim().toUpperCase(), physical_address: address.trim() || null });
+    setBusy(false);
+    if (error) { toast.error(error.code === "23505" ? "That branch code is already used" : error.message); return; }
+    toast.success(`Branch ${name} added`);
+    setName(""); setCode(""); setAddress(""); setOpen(false); onCreated();
+  }
+  if (!open) return <Button size="lg" className="mt-4 h-14 w-full text-lg font-black" onClick={() => setOpen(true)}>+ Add branch</Button>;
+  return (
+    <form onSubmit={submit} className="mt-4 flex flex-col gap-3 rounded-xl border-4 border-foreground bg-card p-4">
+      <h2 className="text-2xl font-black">Add a branch</h2>
+      <p className="text-sm font-semibold text-muted-foreground">A branch is a shop location. Tills and staff are set up separately.</p>
+      <div className="flex flex-col gap-1"><Label className="font-bold">Branch name</Label><Input required minLength={2} value={name} onChange={(e) => setName(e.target.value)} className="h-12 border-2 text-lg" /></div>
+      <div className="flex flex-col gap-1"><Label className="font-bold">Branch code (on receipts)</Label><Input required maxLength={8} pattern="[A-Za-z0-9]+" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="h-12 border-2 text-lg uppercase" /></div>
+      <div className="flex flex-col gap-1"><Label className="font-bold">Address (optional)</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} className="h-12 border-2 text-lg" /></div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" size="lg" className="h-12 border-2 font-bold" onClick={() => setOpen(false)}>Cancel</Button>
+        <Button type="submit" size="lg" disabled={busy} className="h-12 font-black">{busy ? "Saving…" : "Add branch"}</Button>
+      </div>
+    </form>
   );
 }
 
