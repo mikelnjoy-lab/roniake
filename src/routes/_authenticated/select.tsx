@@ -74,7 +74,6 @@ function SelectPage() {
   if (list.length === 0) {
     return (
       <AppShell>
-      <PlatformLink />
         <PlatformLink />
         <CreateBusiness onCreated={(id) => { qc.invalidateQueries({ queryKey: ["my-memberships"] }); setBusinessId(id); }} />
       </AppShell>
@@ -84,7 +83,6 @@ function SelectPage() {
   if (!businessId) {
     return (
       <AppShell>
-      <PlatformLink />
         <PlatformLink />
         <h1 className="mb-4 text-3xl font-black">Choose business</h1>
         <div className="flex flex-col gap-3">
