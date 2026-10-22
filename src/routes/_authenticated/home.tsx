@@ -46,7 +46,7 @@ function Home() {
         )}
       </div>
       <Button asChild variant="outline" size="lg" className="mt-4 h-14 w-full border-2 text-lg font-bold">
-        <Link to="/select">Switch business or branch</Link>
+        <Link to="/select">Switch or add branch</Link>
       </Button>
       <h2 className="mt-6 mb-2 text-xl font-black">What you can do here</h2>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
