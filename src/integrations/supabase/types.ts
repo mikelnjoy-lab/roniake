@@ -68,6 +68,55 @@ export type Database = {
           },
         ]
       }
+      branch_products: {
+        Row: {
+          branch_id: string
+          business_id: string
+          enabled: boolean
+          product_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          enabled?: boolean
+          product_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          enabled?: boolean
+          product_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_products_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branch_receipt_settings: {
         Row: {
           address: string | null
@@ -2389,6 +2438,34 @@ export type Database = {
         Args: { _branch: string; _permission: string }
         Returns: string
       }
+      branch_catalog: {
+        Args: { _branch: string }
+        Returns: {
+          barcode: string | null
+          business_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_weighted: boolean
+          low_stock_threshold: number | null
+          name: string
+          parent_product_id: string | null
+          plu_code: string | null
+          selling_price: number
+          sku: string
+          tax_class: string
+          track_stock: boolean
+          unit: string
+          units_per_parent: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       branch_stock_levels: {
         Args: { _branch: string }
         Returns: {
@@ -2739,6 +2816,10 @@ export type Database = {
           _terms: number
         }
         Returns: string
+      }
+      set_branch_product: {
+        Args: { _branch: string; _enabled: boolean; _product: string }
+        Returns: undefined
       }
       subscription_overview: { Args: { _business: string }; Returns: Json }
       supplier_balances: {
