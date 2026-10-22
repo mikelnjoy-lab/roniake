@@ -30,8 +30,8 @@ function Pos() {
   const discountOk = can(tenant.permissions, "pos.discount");
   const shift = useQuery(shiftQuery(branch));
   const products = useQuery({
-    queryKey: ["products", tenant.business_id],
-    queryFn: async () => (await supabase.from("products").select("*").eq("business_id", tenant.business_id).eq("is_active", true).order("name")).data as Product[] ?? [],
+    queryKey: ["products", "branch", branch],
+    queryFn: async () => { const { data, error } = await supabase.rpc("branch_catalog", { _branch: branch }); if (error) throw error; return (data ?? []) as Product[]; },
   });
   const stock = useQuery({
     queryKey: ["stock-levels", branch],

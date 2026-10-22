@@ -32,6 +32,18 @@ function Catalog() {
       return data;
     },
   });
+  const branch = tenant.branch_id;
+  const assort = useQuery({
+    queryKey: ["branch-products", branch],
+    enabled: !!branch,
+    queryFn: async () => { const { data, error } = await supabase.from("branch_products").select("product_id,enabled").eq("branch_id", branch!); if (error) throw error; return new Set((data ?? []).filter((r) => r.enabled).map((r) => r.product_id)); },
+  });
+  const toggle = async (id: string, on: boolean) => {
+    const { error } = await supabase.rpc("set_branch_product", { _branch: branch!, _product: id, _enabled: on });
+    if (error) { toast.error(error.message); return; }
+    toast.success(on ? "Now sold in this branch" : "Removed from this branch's till");
+    qc.invalidateQueries({ queryKey: ["branch-products"] }); qc.invalidateQueries({ queryKey: ["products"] });
+  };
   const list = (products.data ?? []).filter((p) => !q || `${p.name} ${p.sku} ${p.barcode ?? ""}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
@@ -40,20 +52,23 @@ function Catalog() {
         <h1 className="mr-auto text-3xl font-black">Products</h1>
         {manage && <Button size="lg" className="h-12 text-lg font-black" onClick={() => setOpen(!open)}>{open ? "Close" : "+ Add product"}</Button>}
       </div>
-      {open && <ProductForm businessId={tenant.business_id} parents={products.data ?? []} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["products"] }); }} />}
+      {open && <ProductForm businessId={tenant.business_id} branchId={branch} parents={products.data ?? []} onDone={() => { setOpen(false); qc.invalidateQueries({ queryKey: ["products"] }); }} />}
       <Input placeholder="Search name, code or barcode" value={q} onChange={(e) => setQ(e.target.value)} className="mt-4 h-12 border-2 text-lg" />
       <div className="mt-3 overflow-x-auto rounded-xl border-2 border-foreground">
         <table className="w-full text-left">
-          <thead className="bg-foreground text-background"><tr><th className="p-3">Name</th><th className="p-3">Code</th><th className="p-3">Barcode</th><th className="p-3">Unit</th><th className="p-3">Tax</th><th className="p-3 text-right">Price</th></tr></thead>
+          <thead className="bg-foreground text-background"><tr><th className="p-3">Name</th><th className="p-3">Code</th><th className="p-3">Barcode</th><th className="p-3">Unit</th><th className="p-3">Tax</th><th className="p-3 text-right">Price</th><th className="p-3">This branch</th></tr></thead>
           <tbody>
             {list.map((p) => (
               <tr key={p.id} className="border-t-2 border-border">
                 <td className="p-3 font-bold">{p.name}{p.is_weighted && <span className="ml-2 rounded bg-secondary px-1 text-xs">by weight</span>}{p.parent_product_id && <span className="ml-2 rounded bg-muted px-1 text-xs">from pack ×{p.units_per_parent}</span>}</td>
                 <td className="p-3">{p.sku}</td><td className="p-3">{p.barcode ?? "—"}</td><td className="p-3">{p.unit}</td><td className="p-3">{p.tax_class}</td>
                 <td className="p-3 text-right font-black">{kes(p.selling_price)}</td>
+                <td className="p-3">{assort.data?.has(p.id)
+                  ? <span className="flex items-center gap-2"><span className="rounded bg-primary px-2 py-1 text-xs font-black text-primary-foreground">Sold here</span>{manage && branch && <Button size="sm" variant="outline" onClick={() => toggle(p.id, false)}>Remove</Button>}</span>
+                  : <span className="flex items-center gap-2"><span className="text-xs text-muted-foreground">Not in this branch</span>{manage && branch && <Button size="sm" onClick={() => toggle(p.id, true)}>Sell here</Button>}</span>}</td>
               </tr>
             ))}
-            {!list.length && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">{products.isLoading ? "Loading…" : "No products yet."}</td></tr>}
+            {!list.length && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">{products.isLoading ? "Loading…" : "No products yet."}</td></tr>}
           </tbody>
         </table>
       </div>
@@ -61,18 +76,22 @@ function Catalog() {
   );
 }
 
-function ProductForm({ businessId, parents, onDone }: { businessId: string; parents: { id: string; name: string }[]; onDone: () => void }) {
+function ProductForm({ businessId, branchId, parents, onDone }: { businessId: string; branchId: string | null; parents: { id: string; name: string }[]; onDone: () => void }) {
   const [f, setF] = useState({ name: "", sku: "", barcode: "", unit: "pc", price: "", tax: "B", weighted: false, plu: "", parent: "", per: "" });
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value });
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = await supabase.from("products").insert({
+    const { data: created, error } = await supabase.from("products").insert({
       business_id: businessId, name: f.name.trim(), sku: f.sku.trim(), barcode: f.barcode.trim() || null, unit: f.unit,
       selling_price: Number(f.price), tax_class: f.tax, is_weighted: f.weighted, plu_code: f.weighted ? f.plu.trim() || null : null,
       parent_product_id: f.parent || null, units_per_parent: f.parent ? Number(f.per) : null,
-    });
+    }).select("id").single();
+    if (!error && created && branchId) {
+      const r = await supabase.rpc("set_branch_product", { _branch: branchId, _product: created.id, _enabled: true });
+      if (r.error) toast.error("Product saved, but not added to this branch: " + r.error.message);
+    }
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Product added");
