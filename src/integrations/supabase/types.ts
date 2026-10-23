@@ -649,6 +649,133 @@ export type Database = {
           },
         ]
       }
+      manual_debt_repayments: {
+        Row: {
+          amount: number
+          business_id: string
+          client_ref: string
+          created_at: string
+          customer_id: string
+          debt_id: string
+          id: string
+          method: Database["public"]["Enums"]["tender_type"]
+          paid_on: string
+          recorded_by: string
+          reference: string | null
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          client_ref: string
+          created_at?: string
+          customer_id: string
+          debt_id: string
+          id?: string
+          method: Database["public"]["Enums"]["tender_type"]
+          paid_on: string
+          recorded_by: string
+          reference?: string | null
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          customer_id?: string
+          debt_id?: string
+          id?: string
+          method?: Database["public"]["Enums"]["tender_type"]
+          paid_on?: string
+          recorded_by?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_debt_repayments_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_repayments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_repayments_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "manual_debts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_debts: {
+        Row: {
+          business_id: string
+          client_ref: string
+          created_at: string
+          customer_id: string
+          debt_type: string
+          due_on: string | null
+          id: string
+          incurred_on: string
+          notes: string | null
+          principal: number
+          reason: string
+          recorded_by: string
+          reference: string | null
+        }
+        Insert: {
+          business_id: string
+          client_ref: string
+          created_at?: string
+          customer_id: string
+          debt_type: string
+          due_on?: string | null
+          id?: string
+          incurred_on: string
+          notes?: string | null
+          principal: number
+          reason: string
+          recorded_by: string
+          reference?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          customer_id?: string
+          debt_type?: string
+          due_on?: string | null
+          id?: string
+          incurred_on?: string
+          notes?: string | null
+          principal?: number
+          reason?: string
+          recorded_by?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_debts_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       membership_branches: {
         Row: {
           branch_id: string
@@ -2556,6 +2683,27 @@ export type Database = {
           user_id: string
         }[]
       }
+      manual_debt_register: {
+        Args: { _business: string }
+        Returns: {
+          created_at: string
+          customer_id: string
+          customer_name: string
+          debt_type: string
+          due_on: string
+          id: string
+          incurred_on: string
+          notes: string
+          outstanding: number
+          paid: number
+          principal: number
+          reason: string
+          recorded_by: string
+          recorded_by_email: string
+          reference: string
+          status: string
+        }[]
+      }
       member_role: {
         Args: { _business: string }
         Returns: Database["public"]["Enums"]["business_role"]
@@ -2739,6 +2887,31 @@ export type Database = {
         }
         Returns: Json
       }
+      record_manual_debt: {
+        Args: {
+          _client_ref: string
+          _customer: string
+          _due_on: string
+          _incurred_on: string
+          _notes: string
+          _principal: number
+          _reason: string
+          _reference: string
+          _type: string
+        }
+        Returns: Json
+      }
+      record_manual_debt_repayment: {
+        Args: {
+          _amount: number
+          _client_ref: string
+          _debt: string
+          _method: Database["public"]["Enums"]["tender_type"]
+          _paid_on: string
+          _reference: string
+        }
+        Returns: Json
+      }
       record_shift_payout: {
         Args: {
           _amount: number
@@ -2776,6 +2949,20 @@ export type Database = {
         Returns: Json
       }
       revoke_support_access: { Args: { _grant: string }; Returns: undefined }
+      sales_history: {
+        Args: {
+          _branch: string
+          _business: string
+          _cashier?: string
+          _from: string
+          _limit?: number
+          _offset?: number
+          _status?: string
+          _tender?: string
+          _to: string
+        }
+        Returns: Json
+      }
       save_branch_receipt_settings: {
         Args: { _branch: string; _s: Json }
         Returns: number

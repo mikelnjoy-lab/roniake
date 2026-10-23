@@ -134,6 +134,13 @@
       "when": 1792693701703,
       "tag": "0018_branch_product_assortment",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792735114158,
+      "tag": "0019_sales_filters_manual_debts",
+      "breakpoints": true
     }
   ]
 }
