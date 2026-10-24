@@ -5,52 +5,79 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Receipt, loadReceipt } from "@/components/Receipt";
+import { PrintButton } from "@/components/PrintButton";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
+import { downloadCsv } from "@/lib/csv";
+import { eatRange, fmtEat, presetRange } from "@/lib/eat";
 
 export const Route = createFileRoute("/_authenticated/sales")({
-  head: () => ({ meta: [{ title: "Sales — RONIA Business" }, { name: "description", content: "Today's sales, receipts and voids." }] }),
+  head: () => ({ meta: [{ title: "Sales history — RONIA Business" }, { name: "description", content: "Sales history with date, time, branch, cashier, payment and status filters." }] }),
   beforeLoad: requireTenant,
   component: Sales,
 });
 
 const REASONS = ["Customer return", "Cashier ringing error", "Damaged goods", "Payment dispute"];
+const PAGE = 50;
+const STATUS: Record<string, string> = { completed: "Completed", voided: "Voided", refunded: "Refunded", partially_refunded: "Part refunded" };
+type HistRow = { id: string; receipt_no: string; total: number; created_at: string; branch_code: string; cashier_id: string; status: string; refunded: number };
+type Hist = { total_count: number; rows: HistRow[]; cashiers: { id: string; email: string | null }[];
+  summary: { receipts: number; voided: number; gross: number; refunds: number; tax: number; cogs: number | null; tenders: Record<string, number>; refunds_by_type: Record<string, number> } };
 
 function Sales() {
   const { tenant } = Route.useRouteContext();
-  const branch = tenant.branch_id!;
   const qc = useQueryClient();
+  const reports = can(tenant.permissions, "reports.view");
+  const canVoid = can(tenant.permissions, "sales.void");
   const [open, setOpen] = useState<string | null>(null);
   const [width, setWidth] = useState<58 | 80>(80);
   const [voiding, setVoiding] = useState(false);
   const [returning, setReturning] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const t0 = presetRange("today");
+  const [f, setF] = useState({ start: t0.start, end: t0.end, startTime: "", endTime: "", branch: tenant.branch_id ?? "", cashier: "", tender: "", status: "" });
+  const [page, setPage] = useState(0);
+  const set = (p: Partial<typeof f>) => { setF({ ...f, ...p }); setPage(0); };
+  const branches = useQuery({
+    queryKey: ["branches-list", tenant.business_id], enabled: reports,
+    queryFn: async () => (await supabase.from("branches").select("id,name,code").eq("business_id", tenant.business_id).order("name")).data ?? [],
+  });
+  const valid = !!f.start && !!f.end && eatRange(f.start, f.end, f.startTime, f.endTime).to > eatRange(f.start, f.end, f.startTime, f.endTime).from;
+  const args = () => {
+    const { from, to } = eatRange(f.start, f.end, f.startTime, f.endTime);
+    return { _business: tenant.business_id, _branch: (f.branch || null) as string, _from: from.toISOString(), _to: to.toISOString(),
+      _cashier: (f.cashier || null) as string, _tender: (f.tender || null) as string, _status: (f.status || null) as string };
+  };
   const sales = useQuery({
-    queryKey: ["sales", branch],
+    queryKey: ["sales", tenant.business_id, f, page], enabled: valid,
     queryFn: async () => {
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const { data, error } = await supabase.from("sales").select("id,receipt_no,total,tax_total,cogs_total,created_at").eq("branch_id", branch).gte("created_at", start.toISOString()).order("created_at", { ascending: false });
+      const { data, error } = await supabase.rpc("sales_history", { ...args(), _limit: PAGE, _offset: page * PAGE });
       if (error) throw error;
-      const ids = data.map((s) => s.id);
-      const t = ids.length ? (await supabase.from("sale_tenders").select("tender_type,amount,sale_id").in("sale_id", ids)).data ?? [] : [];
-      const v = ids.length ? (await supabase.from("sale_voids").select("sale_id").in("sale_id", ids)).data ?? [] : [];
-      const ret = (await supabase.from("sale_returns").select("refund_amount,tax_amount,cogs_reversed,refund_type").eq("branch_id", branch).gte("created_at", start.toISOString())).data ?? [];
-      return { sales: data, tenders: t, voided: new Set(v.map((x) => x.sale_id)), returns: ret };
+      return data as unknown as Hist;
     },
   });
   const receipt = useQuery({ queryKey: ["receipt", open], enabled: !!open, queryFn: () => loadReceipt(supabase, open!) });
   useEffect(() => { const w = receipt.data?.settings?.paper_width; if (w) setWidth(w); }, [receipt.data]);
-  const voided = sales.data?.voided ?? new Set<string>();
-  const all = sales.data?.sales ?? [];
-  const s = all.filter((x) => !voided.has(x.id));
-  const rets = sales.data?.returns ?? [];
-  const refunds = rets.reduce((a, r) => a + Number(r.refund_amount), 0);
-  const total = s.reduce((a, x) => a + Number(x.total), 0) - refunds;
-  const by = (k: string) => (sales.data?.tenders ?? []).filter((t) => t.tender_type === k && !voided.has(t.sale_id)).reduce((a, t) => a + Number(t.amount), 0)
-    - rets.filter((r) => r.refund_type === k).reduce((a, r) => a + Number(r.refund_amount), 0);
-  const reports = can(tenant.permissions, "reports.view");
-  const canVoid = can(tenant.permissions, "sales.void");
+  const sm = sales.data?.summary;
+  const all = sales.data?.rows ?? [];
+  const refunds = Number(sm?.refunds ?? 0);
+  const total = Number(sm?.gross ?? 0) - refunds;
+  const by = (k: string) => Number(sm?.tenders?.[k] ?? 0) - Number(sm?.refunds_by_type?.[k] ?? 0);
+  const cashierName = (id: string) => sales.data?.cashiers.find((c) => c.id === id)?.email ?? id.slice(0, 8);
+  const pages = Math.max(1, Math.ceil((sales.data?.total_count ?? 0) / PAGE));
+
+  async function exportCsv() {
+    const out: Record<string, unknown>[] = [];
+    for (let p = 0; p < 50; p++) {
+      const { data, error } = await supabase.rpc("sales_history", { ...args(), _limit: 200, _offset: p * 200 });
+      if (error) { toast.error(error.message); return; }
+      const d = data as unknown as Hist;
+      out.push(...d.rows.map((r) => ({ receipt: r.receipt_no, time_eat: fmtEat(r.created_at), branch: r.branch_code, cashier: cashierName(r.cashier_id), status: r.status, total: r.total, refunded: r.refunded })));
+      if (d.rows.length < 200) break;
+    }
+    if (!downloadCsv(`sales-${f.start}_${f.end}`, out)) toast.error("Nothing to export for these filters");
+  }
 
   async function doVoid() {
     if (!open || reason.trim().length < 3) { toast.error("Choose or type a reason"); return; }
