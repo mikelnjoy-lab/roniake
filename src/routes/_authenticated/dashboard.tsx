@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
+import { addDays, eatToUtc, eatToday } from "@/lib/eat";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
 import { downloadCsv } from "@/lib/csv";
@@ -33,7 +34,8 @@ function Dashboard() {
   const exportOk = can(tenant.permissions, "reports.export");
   const auditOk = can(tenant.permissions, "audit.view");
 
-  const from = new Date(); from.setHours(0, 0, 0, 0); from.setDate(from.getDate() - days);
+  // Period starts at EAT midnight regardless of the device timezone.
+  const from = eatToUtc(addDays(eatToday(), -days));
 
   const sales = useQuery({
     queryKey: ["dash-sales", branch, days], enabled: reports,
