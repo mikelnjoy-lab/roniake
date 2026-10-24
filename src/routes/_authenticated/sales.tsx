@@ -152,7 +152,7 @@ function Sales() {
                 : <span className="self-center text-sm font-bold">Need a void or return? Ask a manager.</span>)}
             </div>
             {returning && !receipt.data.void && (
-              <ReturnPanel saleId={open} onDone={() => { setReturning(false); qc.invalidateQueries({ queryKey: ["sales", branch] }); }} />
+              <ReturnPanel saleId={open} onDone={() => { setReturning(false); qc.invalidateQueries({ queryKey: ["sales"] }); }} />
             )}
             {voiding && (
               <div className="mb-3 rounded-xl border-4 border-destructive bg-card p-3 print:hidden">
