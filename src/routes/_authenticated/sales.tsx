@@ -87,31 +87,63 @@ function Sales() {
     if (error) { toast.error(error.message); return; }
     toast.success("Sale voided — stock returned to shelf");
     setVoiding(false); setReason("");
-    qc.invalidateQueries({ queryKey: ["sales", branch] });
+    qc.invalidateQueries({ queryKey: ["sales"] });
     qc.invalidateQueries({ queryKey: ["receipt", open] });
   }
 
+  const inp = "h-12 rounded-lg border-2 border-foreground bg-background px-2 text-base";
   return (
     <AppShell wide>
-      <h1 className="text-3xl font-black">Today's sales {reports ? "" : "(mine)"}</h1>
+      <h1 className="text-3xl font-black">Sales history {reports ? "" : "(mine)"}</h1>
+      <div className="mt-3 rounded-xl border-4 border-foreground bg-card p-3 print:hidden">
+        <div className="flex flex-wrap gap-2">
+          {([["today", "Today"], ["yesterday", "Yesterday"], ["week", "This week"], ["month", "This month"]] as const).map(([k, l]) => (
+            <Button key={k} variant="outline" className="h-11 border-2 font-bold" onClick={() => { const r = presetRange(k); set({ start: r.start, end: r.end, startTime: "", endTime: "" }); }}>{l}</Button>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <label className="text-sm font-bold">From date<input type="date" value={f.start} onChange={(e) => set({ start: e.target.value })} className={`${inp} w-full`} /></label>
+          <label className="text-sm font-bold">From time<input type="time" value={f.startTime} onChange={(e) => set({ startTime: e.target.value })} className={`${inp} w-full`} /></label>
+          <label className="text-sm font-bold">To date<input type="date" value={f.end} onChange={(e) => set({ end: e.target.value })} className={`${inp} w-full`} /></label>
+          <label className="text-sm font-bold">To time<input type="time" value={f.endTime} onChange={(e) => set({ endTime: e.target.value })} className={`${inp} w-full`} /></label>
+          {reports && <label className="text-sm font-bold">Branch<select value={f.branch} onChange={(e) => set({ branch: e.target.value })} className={`${inp} w-full`}>
+            <option value="">All my branches</option>{(branches.data ?? []).map((b) => <option key={b.id} value={b.id}>{b.name} ({b.code})</option>)}</select></label>}
+          {reports && <label className="text-sm font-bold">Cashier<select value={f.cashier} onChange={(e) => set({ cashier: e.target.value })} className={`${inp} w-full`}>
+            <option value="">All cashiers</option>{(sales.data?.cashiers ?? []).map((c) => <option key={c.id} value={c.id}>{c.email ?? c.id.slice(0, 8)}</option>)}</select></label>}
+          <label className="text-sm font-bold">Payment<select value={f.tender} onChange={(e) => set({ tender: e.target.value })} className={`${inp} w-full`}>
+            <option value="">Any</option><option value="cash">Cash</option><option value="mpesa_manual">M-Pesa</option><option value="deni">Deni</option><option value="card">Card</option><option value="other">Other</option></select></label>
+          <label className="text-sm font-bold">Status<select value={f.status} onChange={(e) => set({ status: e.target.value })} className={`${inp} w-full`}>
+            <option value="">Any</option>{Object.entries(STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
+        </div>
+        <p className="mt-2 text-sm">Times are Nairobi time (EAT). End time includes that whole minute; leave times empty for whole days.</p>
+        {!valid && <p className="mt-1 font-bold text-destructive">The end must be after the start.</p>}
+        {reports && can(tenant.permissions, "reports.export") && <Button variant="outline" className="mt-2 border-2 font-bold" onClick={exportCsv}>Export these sales (CSV)</Button>}
+      </div>
+      {sales.error && <p className="mt-2 font-bold text-destructive">Could not load sales: {(sales.error as Error).message}</p>}
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {[["Sales", kes(total)], ["Receipts", String(s.length)], ["Cash (tendered)", kes(by("cash"))], ["M-Pesa", kes(by("mpesa_manual"))]].map(([l, v]) => (
+        {[["Net sales", kes(total)], ["Receipts", String(sm?.receipts ?? 0)], ["Cash (net)", kes(by("cash"))], ["M-Pesa (net)", kes(by("mpesa_manual"))]].map(([l, v]) => (
           <div key={l} className="rounded-xl border-4 border-foreground bg-card p-3"><p className="text-sm font-bold uppercase">{l}</p><p className="text-2xl font-black">{v}</p></div>
         ))}
       </div>
-      {reports && <p className="mt-2 font-bold">Gross profit today: {kes(total - s.reduce((a, x) => a + Number(x.tax_total) + Number(x.cogs_total), 0) + rets.reduce((a, r) => a + Number(r.tax_amount) + Number(r.cogs_reversed), 0))} (excl. VAT){voided.size ? ` · ${voided.size} voided` : ""}{refunds ? ` · ${kes(refunds)} refunded` : ""}</p>}
+      <p className="mt-2 font-bold">VAT {kes(sm?.tax ?? 0)} · Deni {kes(by("deni"))}{reports && sm?.cogs != null ? ` · Gross profit ${kes(total - Number(sm.tax) - Number(sm.cogs))} (excl. VAT)` : ""}{sm?.voided ? ` · ${sm.voided} voided` : ""}{refunds ? ` · ${kes(refunds)} refunded` : ""}</p>
+      {f.tender && <p className="text-sm">Payment filter keeps whole sales that used this method; totals cover those sales.</p>}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <ul className="space-y-2">{all.map((x) => (
-          <li key={x.id}><button onClick={() => { setOpen(x.id); setVoiding(false); }} className={`flex w-full justify-between rounded-lg border-2 px-3 py-3 text-left font-bold ${open === x.id ? "border-primary bg-secondary" : "border-foreground bg-card"} ${voided.has(x.id) ? "opacity-60" : ""}`}>
-            <span>{x.receipt_no} · {new Date(x.created_at).toLocaleTimeString()}{voided.has(x.id) && <span className="ml-2 text-destructive">VOIDED</span>}</span><span className={voided.has(x.id) ? "line-through" : ""}>{kes(x.total)}</span></button></li>))}
-          {!all.length && <li className="text-muted-foreground">{sales.isLoading ? "Loading…" : "No sales yet today."}</li>}
+        <div><ul className="space-y-2">{all.map((x) => (
+          <li key={x.id}><button onClick={() => { setOpen(x.id); setVoiding(false); }} className={`flex w-full justify-between rounded-lg border-2 px-3 py-3 text-left font-bold ${open === x.id ? "border-primary bg-secondary" : "border-foreground bg-card"} ${x.status === "voided" ? "opacity-60" : ""}`}>
+            <span>{x.receipt_no} · {fmtEat(x.created_at)}{reports && <span className="block text-sm font-normal">{x.branch_code} · {cashierName(x.cashier_id)}</span>}{x.status !== "completed" && <span className="ml-2 text-destructive">{STATUS[x.status]}</span>}</span><span className={x.status === "voided" ? "line-through" : ""}>{kes(x.total)}</span></button></li>))}
+          {!all.length && <li className="text-muted-foreground">{sales.isLoading ? "Loading…" : "No sales match these filters."}</li>}
         </ul>
+        {pages > 1 && <div className="mt-2 flex items-center justify-between">
+          <Button variant="outline" disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</Button>
+          <span className="font-bold">Page {page + 1} of {pages}</span>
+          <Button variant="outline" disabled={page + 1 >= pages} onClick={() => setPage(page + 1)}>Next</Button></div>}
+        </div>
         {open && receipt.data && (
           <div>
             <div className="mb-2 flex flex-wrap gap-2 print:hidden">
               <Button variant={width === 58 ? "default" : "outline"} onClick={() => setWidth(58)}>58mm</Button>
               <Button variant={width === 80 ? "default" : "outline"} onClick={() => setWidth(80)}>80mm</Button>
-              <Button onClick={() => window.print()} className="font-black">Print</Button>
+              <PrintButton r={receipt.data} width={width} label="Reprint" />
               {!receipt.data.void && (canVoid
                 ? <>
                     <Button variant="destructive" className="font-black" onClick={() => { setVoiding(true); setReturning(false); }}>Void sale</Button>
