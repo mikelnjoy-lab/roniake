@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ManualDebtBook } from "@/components/ManualDebtBook";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
 
@@ -52,7 +53,7 @@ function Customers() {
   return (
     <AppShell wide>
       <h1 className="text-3xl font-black">Customers & Deni</h1>
-      <p className="mt-1 text-lg font-bold">Total owed: {kes(owed)}</p>
+      <p className="mt-1 text-lg font-bold">Till Deni owed: {kes(owed)} <span className="text-sm font-normal">(loans listed separately below)</span></p>
       {manage && (
         <form onSubmit={create} className="mt-3 grid gap-3 rounded-xl border-4 border-foreground bg-card p-4 sm:grid-cols-2">
           <div><Label>Name</Label><Input required minLength={2} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} className="h-12 text-lg" /></div>
@@ -98,6 +99,7 @@ function Customers() {
         ))}
         {list.data?.length === 0 && <li className="p-6 text-center text-muted-foreground">No customers yet.</li>}
       </ul>
+      {(manage || can(tenant.permissions, "reports.view")) && <ManualDebtBook businessId={tenant.business_id} customers={list.data ?? []} manage={manage} />}
     </AppShell>
   );
 }
