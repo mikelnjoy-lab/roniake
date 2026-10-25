@@ -51,7 +51,9 @@ export function PrinterSetup({ sample, width }: { sample: ReceiptData; width: 58
         <div className="mt-2"><Label>Printer</Label>
           <select value={c.androidTarget ?? ""} onChange={(e) => update({ ...c, androidTarget: e.target.value })} className="h-12 w-full rounded-md border-2 border-input bg-background px-3">
             <option value="">Choose…</option>{targets.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.type})</option>)}
-          </select></div>
+          </select>
+          <Label className="mt-2 block">Or network printer (IP:port)</Label>
+          <Input placeholder="192.168.1.50:9100" defaultValue={c.androidTarget?.startsWith("net:") ? c.androidTarget.slice(4) : ""} onBlur={(e) => e.target.value.trim() && update({ ...c, androidTarget: `net:${e.target.value.trim()}` })} /></div>
       )}
       {c.kind === "bluetooth" && <p className="mt-2 text-sm">Works only with Bluetooth Low Energy printers in Chrome. Many cheap “classic” Bluetooth printers need the Android app instead. You must tap Connect again after reloading the page.</p>}
       {c.kind === "webusb" && <p className="mt-2 text-sm">Works in Chrome/Edge. On Windows, a printer with an installed driver is usually blocked — use the print bridge for those.</p>}
