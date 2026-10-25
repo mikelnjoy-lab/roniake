@@ -6,6 +6,8 @@ import { AppShell, useOnline } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Receipt, loadReceipt, branchReceiptSettingsQuery } from "@/components/Receipt";
+import { PrintButton } from "@/components/PrintButton";
+import { printReceipt, shouldAutoPrint } from "@/lib/printing/print";
 import { supabase } from "@/integrations/supabase/client";
 import { can, kes, requireTenant } from "@/lib/tenant-guard";
 import { deviceId, dismissFailed, isNetworkError, listPending, putPending, submitSale, syncPending, type PendingSale } from "@/lib/offline-queue";
@@ -145,7 +147,11 @@ function Pos() {
   };
   const next = () => { setCart([]); setCustomerId(""); setTenders([{ type: "cash", amount: "", reference: "" }]); setPaying(false); setDone(null); setTimeout(() => scanRef.current?.focus(), 50); };
   const receipt = useQuery({ queryKey: ["receipt", done?.saleId], enabled: !!done?.saleId, queryFn: () => loadReceipt(supabase, done!.saleId!) });
-  useEffect(() => { if (receipt.data?.settings?.auto_print) setTimeout(() => window.print(), 300); }, [receipt.data?.receipt_no]);
+  useEffect(() => {
+    const r = receipt.data;
+    // Auto-print once per receipt; printing never re-submits the sale.
+    if (r?.settings?.auto_print && shouldAutoPrint(r.receipt_no)) setTimeout(() => { void printReceipt(r, width).then((x) => { if (x.error) toast.error(`Printer: ${x.error}. Opened the print dialog instead.`); }); }, 300);
+  }, [receipt.data?.receipt_no]);
 
   if (!shift.isLoading && !shift.data) return (
     <AppShell><div className="rounded-xl border-4 border-foreground bg-secondary p-6 text-center text-secondary-foreground">
@@ -164,7 +170,7 @@ function Pos() {
         <div className="mt-3 flex gap-2 print:hidden">
           <Button variant={width === 58 ? "default" : "outline"} onClick={() => setWidth(58)}>58mm</Button>
           <Button variant={width === 80 ? "default" : "outline"} onClick={() => setWidth(80)}>80mm</Button>
-          <Button onClick={() => window.print()} className="font-black">Print receipt</Button>
+          <PrintButton r={receipt.data} width={width} reprint={false} />
         </div>
         <div className="mt-2 border-2 border-foreground"><Receipt r={receipt.data} width={width} /></div>
       </>}
