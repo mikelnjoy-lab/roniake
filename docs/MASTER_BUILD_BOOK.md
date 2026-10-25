@@ -195,3 +195,36 @@ Remaining order: (1) support staff sign-in (needs decision), (2) practice backup
 - Fix (migration 0018): `branch_products` (branch × product, enabled flag; read via branch-access RLS, writes only via `set_branch_product`, which needs catalog.manage + branch access and is audited). `branch_catalog(_branch)` feeds the Till (search + barcode). A `sale_lines` trigger refuses products not enabled in the sale's branch, so online and offline-replayed sales are enforced server-side. Receiving stock into a branch enables the product in that branch only. New products from the Products screen are enabled in the active branch only. Products stay business-level for owner oversight/reports.
 - Backfill: products enabled wherever they already had stock rows; never-stocked products enabled in all branches (prior behaviour). Real data: Main Enterprises' 2 products enabled in Main supermarket only; Ronia business centre now shows none until enabled. No stock, sales or movements changed.
 - Tests: tests/assortment/verification.sql 22/22 (rollback-only). Note: SALE-01 was refused by the stock check first; the assortment guard itself is proven by SALE-02. Browser check of the new Products "Sell here" control not yet performed.
+
+---
+
+## Update 2026-10-23 — Sales filters, manual Deni loans, printer connectivity
+
+No automated, browser, Android or physical-printer tests were run for this update (owner instruction: manual verification by Joyce Mwangi). Typecheck only.
+
+### 1. Sales history date/time filters — Implemented — awaiting manual verification
+- DB (migration `0019_sales_filters_manual_debts.sql`): `sales_history(_business,_branch,_from,_to,_cashier,_tender,_status,_limit,_offset)` security-definer RPC. Checks business membership; specific branch requires `can_access_branch_row`; all-branch view requires `reports.view` and only includes accessible branches; users without `reports.view` are forced to their own sales; max 400-day period; page size ≤ 200. Returns paged rows, total count, summary (gross, refunds, VAT net of returns, COGS only for report roles, tender and refund splits, voids) and cashier list. Index `sales(business_id, created_at desc)`.
+- Status derived from authoritative records: voided (sale_voids), refunded (returns ≥ total), partially_refunded, completed. Timestamp used: sale `created_at` (posting time) only.
+- EAT: `src/lib/eat.ts` converts Nairobi wall-clock to UTC half-open ranges; end time inclusive to the minute; date-only covers whole days.
+- UI `src/routes/_authenticated/sales.tsx`: presets (today/yesterday/this week/this month), date+time inputs, branch, cashier, payment, status, pagination, filtered CSV export (reports.export), empty/error states. Receipt view, reprint, void and return flows retained.
+- `dashboard.tsx`: period start now EAT midnight regardless of device timezone (no other change).
+- Known semantics: payment filter keeps whole sales that used that method; summary totals cover those whole sales.
+
+### 2. Manual Deni loans — Implemented — awaiting manual verification
+- Tables `manual_debts`, `manual_debt_repayments`: append-only (immutable_row triggers), RLS SELECT for `deni.manage` or `reports.view`, no direct INSERT grants.
+- RPCs `record_manual_debt`, `record_manual_debt_repayment` (require `deni.manage`; idempotent by `client_ref`; positive 2-dp amounts; no future dates; due ≥ loan date; repayment ≤ outstanding with `FOR UPDATE` row lock against concurrent over-allocation; M-Pesa code required; audit `deni.manual_debt_recorded` / `deni.manual_debt_repaid`). `manual_debt_register` derives paid/outstanding/status (open/overdue/settled, EAT date).
+- Debtors reuse `customers`. POS Deni (customers.balance / customer_ledger) is untouched; combined per-person = POS balance + loan outstanding, each counted once. No sale, revenue, stock movement or COGS is created. No interest/penalties.
+- UI: `src/components/ManualDebtBook.tsx` on Customers & Deni page (record loan, open/overdue/paid/all, per-debt repayment, by-person combined balance with statement separating till Deni and loans).
+- Not implemented: reversal/write-off of a manual loan or repayment (needs owner decision on policy).
+
+### 3. Receipt printers — Partially implemented — dependencies outstanding
+- Shared rendering: `src/lib/printing/escpos.ts` renders ESC/POS from the same `ReceiptData` (frozen sale snapshot for reprints), 32/48 columns for 58/80mm, mandatory blocks always printed, "REPRINT"/copy labels, branch `copies`.
+- Transports `src/lib/printing/transports.ts` (per-device config in localStorage): browser print dialog; WebUSB (Chrome/Edge, secure context, bulk OUT endpoint — usually blocked on Windows when an OS driver owns the printer); Web Bluetooth (BLE printers only, Chrome; classic SPP printers unreachable from browsers; re-pair needed after reload); network via local print bridge (browsers cannot open raw TCP 9100); Android native bridge.
+- `src/lib/printing/print.ts`: failure falls back to print dialog with error toast; in-flight guard; auto-print once per receipt per session (`shouldAutoPrint`) — printing never re-posts a sale.
+- UI: `PrinterSetup` on Receipt settings (transport choice, unsupported options disabled, Connect/Check/Test receipt, status shows "Connected" only after a real handshake/reply); `PrintButton` in POS and Sales.
+- Dependency — print bridge: NOT supplied. Must implement `GET /health → {ok:true}` and `POST /print {host,port,data_base64} → {ok:true}`, forward bytes to host:port, allow CORS from the app origin, be served on localhost or https.
+- Dependency — Android: no Android shell exists in this project. `native/android/RoniaAndroidPrinter.kt` (USB host, Bluetooth classic RFCOMM/SPP, TCP 9100) is source only, never compiled. Needs a WebView/Capacitor shell registering it as `RoniaAndroidPrinter`, manifest permissions (BLUETOOTH_CONNECT runtime, INTERNET, usb.host) and a USB permission broadcast receiver.
+- Physical printers: none tested.
+
+### Manual checks awaiting owner
+Sales filters (2:00–5:30 PM EAT range, branch/cashier/payment/status, pagination, CSV); cashier sees only own sales; loan record/repay/over-repay refusal/double-tap replay/overdue; loans absent from sales totals; WebUSB/BLE/bridge/Android test receipts on real printers; auto-print single copy.
