@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Receipt, branchReceiptSettingsQuery, type ReceiptData, type ReceiptSettings } from "@/components/Receipt";
+import { PrinterSetup } from "@/components/PrinterSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { can, requireTenant } from "@/lib/tenant-guard";
 
@@ -90,8 +91,8 @@ function ReceiptSettingsPage() {
         <div>
           <p className="mb-2 rounded-md bg-secondary p-2 font-bold text-secondary-foreground">Preview only (simulated on screen). It does not prove your printer works.</p>
           <div className="border-2 border-foreground"><Receipt r={sample} width={width} /></div>
-          <Button size="lg" variant="outline" className="mt-2 w-full font-black" onClick={() => window.print()}>Test print (opens print dialog)</Button>
           <p className="mt-1 text-sm">A test is only successful if a paper receipt actually comes out of your printer and looks right.</p>
+          <div className="mt-3 print:hidden"><PrinterSetup sample={sample} width={width} /></div>
         </div>
       </div>
     </AppShell>
