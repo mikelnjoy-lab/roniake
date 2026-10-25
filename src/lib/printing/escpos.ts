@@ -19,7 +19,7 @@ class Buf {
   big(on: boolean) { return this.raw(GS, 0x21, on ? 0x11 : 0); }
 }
 
-export function receiptToEscPos(r: ReceiptData, width: 58 | 80, opts: { copyLabel?: string } = {}): Uint8Array {
+export function receiptToEscPos(r: ReceiptData, width: 58 | 80, opts: { copyLabel?: string | undefined } = {}): Uint8Array {
   const cols = width === 58 ? 32 : 48;
   const s = r.settings ?? {};
   const pad = (l: string, rt: string) => { const sp = cols - l.length - rt.length; return sp >= 1 ? l + " ".repeat(sp) + rt : `${l.slice(0, cols - rt.length - 1)} ${rt}`; };
