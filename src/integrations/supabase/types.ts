@@ -713,6 +713,122 @@ export type Database = {
           },
         ]
       }
+      manual_debt_reversals: {
+        Row: {
+          business_id: string
+          client_ref: string
+          created_at: string
+          debt_id: string
+          id: string
+          kind: string
+          reason: string
+          recorded_by: string
+          repayment_id: string | null
+        }
+        Insert: {
+          business_id: string
+          client_ref: string
+          created_at?: string
+          debt_id: string
+          id?: string
+          kind: string
+          reason: string
+          recorded_by: string
+          repayment_id?: string | null
+        }
+        Update: {
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          debt_id?: string
+          id?: string
+          kind?: string
+          reason?: string
+          recorded_by?: string
+          repayment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_debt_reversals_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_reversals_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "manual_debts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_reversals_repayment_id_fkey"
+            columns: ["repayment_id"]
+            isOneToOne: false
+            referencedRelation: "manual_debt_repayments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manual_debt_write_offs: {
+        Row: {
+          amount: number
+          business_id: string
+          client_ref: string
+          created_at: string
+          customer_id: string
+          debt_id: string
+          id: string
+          reason: string
+          recorded_by: string
+        }
+        Insert: {
+          amount: number
+          business_id: string
+          client_ref: string
+          created_at?: string
+          customer_id: string
+          debt_id: string
+          id?: string
+          reason: string
+          recorded_by: string
+        }
+        Update: {
+          amount?: number
+          business_id?: string
+          client_ref?: string
+          created_at?: string
+          customer_id?: string
+          debt_id?: string
+          id?: string
+          reason?: string
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_debt_write_offs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_write_offs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manual_debt_write_offs_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "manual_debts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       manual_debts: {
         Row: {
           business_id: string
@@ -2683,6 +2799,18 @@ export type Database = {
           user_id: string
         }[]
       }
+      manual_debt_figures: {
+        Args: { _debt: string }
+        Returns: {
+          collectable: number
+          outstanding: number
+          principal: number
+          recovered: number
+          repaid: number
+          reversed: boolean
+          written_off: number
+        }[]
+      }
       manual_debt_register: {
         Args: { _business: string }
         Returns: {
@@ -2700,8 +2828,10 @@ export type Database = {
           reason: string
           recorded_by: string
           recorded_by_email: string
+          recovered: number
           reference: string
           status: string
+          written_off: number
         }[]
       }
       member_role: {
@@ -2948,6 +3078,15 @@ export type Database = {
         }
         Returns: Json
       }
+      reverse_manual_debt_entry: {
+        Args: {
+          _client_ref: string
+          _debt: string
+          _reason: string
+          _repayment: string
+        }
+        Returns: Json
+      }
       revoke_support_access: { Args: { _grant: string }; Returns: undefined }
       sales_history: {
         Args: {
@@ -3032,6 +3171,15 @@ export type Database = {
           _request_id?: string
         }
         Returns: undefined
+      }
+      write_off_manual_debt: {
+        Args: {
+          _amount: number
+          _client_ref: string
+          _debt: string
+          _reason: string
+        }
+        Returns: Json
       }
       write_platform_audit: {
         Args: {
