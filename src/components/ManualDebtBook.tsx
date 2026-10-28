@@ -11,11 +11,13 @@ import { eatToday, fmtEat } from "@/lib/eat";
 // Manual loans/debts that did NOT come from a POS sale. They never create sales,
 // revenue, stock movements or COGS; POS Deni stays in customers.balance / customer_ledger.
 const TYPES: Record<string, string> = { cash_loan: "Cash loan", salary_advance: "Salary advance", goods_outside_pos: "Goods given outside till", other: "Other" };
-type Debt = { id: string; customer_id: string; customer_name: string; debt_type: string; principal: number; paid: number; outstanding: number;
+type Debt = { id: string; customer_id: string; customer_name: string; debt_type: string; principal: number; paid: number; written_off: number; recovered: number; outstanding: number;
   incurred_on: string; due_on: string | null; reason: string; reference: string | null; notes: string | null; recorded_by_email: string | null; created_at: string; status: string };
 type Customer = { id: string; name: string; phone: string | null; balance: number };
 
-export function ManualDebtBook({ businessId, customers, manage }: { businessId: string; customers: Customer[]; manage: boolean }) {
+const STATUS_LABEL: Record<string, string> = { open: "Open", overdue: "Overdue", settled: "Paid off", written_off: "Written off", reversed: "Reversed (entered by mistake)" };
+
+export function ManualDebtBook({ businessId, customers, manage, owner = false }: { businessId: string; customers: Customer[]; manage: boolean; owner?: boolean }) {
   const qc = useQueryClient();
   const reg = useQuery({
     queryKey: ["manual-debts", businessId],
@@ -25,7 +27,8 @@ export function ManualDebtBook({ businessId, customers, manage }: { businessId: 
       return (data ?? []) as Debt[];
     },
   });
-  const [view, setView] = useState<"open" | "overdue" | "settled" | "all" | "people">("open");
+  const [view, setView] = useState<"open" | "overdue" | "settled" | "written_off" | "all" | "people">("open");
+  const [action, setAction] = useState<{ id: string; kind: "writeoff" | "reverse" } | null>(null);
   const [person, setPerson] = useState<string | null>(null);
   const [repayFor, setRepayFor] = useState<string | null>(null);
   const today = eatToday();
@@ -36,7 +39,7 @@ export function ManualDebtBook({ businessId, customers, manage }: { businessId: 
   const refresh = () => { qc.invalidateQueries({ queryKey: ["manual-debts"] }); qc.invalidateQueries({ queryKey: ["manual-statement"] }); };
 
   const debts = reg.data ?? [];
-  const shown = view === "all" || view === "people" ? debts : view === "open" ? debts.filter((d) => d.status !== "settled") : debts.filter((d) => d.status === view);
+  const shown = view === "all" || view === "people" ? debts : view === "open" ? debts.filter((d) => d.status === "open" || d.status === "overdue") : debts.filter((d) => d.status === view);
   const people = useMemo(() => customers.map((c) => {
     const loans = debts.filter((d) => d.customer_id === c.id).reduce((a, d) => a + Number(d.outstanding), 0);
     return { ...c, loans, pos: Number(c.balance), combined: Number(c.balance) + loans };
@@ -85,7 +88,7 @@ export function ManualDebtBook({ businessId, customers, manage }: { businessId: 
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {([["open", "Open"], ["overdue", "Overdue"], ["settled", "Paid off"], ["all", "All"], ["people", "By person"]] as const).map(([k, l]) => (
+        {([["open", "Open"], ["overdue", "Overdue"], ["settled", "Paid off"], ["written_off", "Written off"], ["all", "All"], ["people", "By person"]] as const).map(([k, l]) => (
           <Button key={k} variant={view === k ? "default" : "outline"} className="h-11 border-2 font-bold" onClick={() => setView(k)}>{l}</Button>
         ))}
       </div>
@@ -109,13 +112,19 @@ export function ManualDebtBook({ businessId, customers, manage }: { businessId: 
               <span><b className="text-lg">{d.customer_name}</b> · {TYPES[d.debt_type]}
                 <span className="block text-sm">{d.reason}{d.reference ? ` · ref ${d.reference}` : ""} · lent {d.incurred_on}{d.due_on ? ` · due ${d.due_on}` : ""} · by {d.recorded_by_email ?? "—"}</span>
                 {d.notes && <span className="block text-sm italic">{d.notes}</span>}
-                <span className="block text-sm">Lent {kes(d.principal)} · repaid {kes(d.paid)}</span></span>
+                <span className="block text-sm">Lent {kes(d.principal)} · repaid {kes(d.paid)}{Number(d.written_off) > 0 && ` · written off ${kes(d.written_off)}`}{Number(d.recovered) > 0 && ` · recovered after write-off ${kes(d.recovered)}`}</span></span>
               <span className="text-right"><span className={`block text-xl font-black ${d.status === "overdue" ? "text-destructive" : ""}`}>{kes(d.outstanding)}</span>
-                <span className="text-sm font-bold uppercase">{d.status === "settled" ? "Paid off" : d.status}</span></span>
+                <span className="text-sm font-bold uppercase">{STATUS_LABEL[d.status] ?? d.status}</span></span>
             </div>
-            {manage && d.status !== "settled" && (repayFor === d.id
-              ? <RepayForm debt={d} onDone={() => { setRepayFor(null); refresh(); }} />
-              : <Button variant="outline" className="mt-2 border-2 font-bold" onClick={() => setRepayFor(d.id)}>Record repayment</Button>)}
+            {manage && d.status !== "reversed" && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {d.status !== "settled" && repayFor !== d.id && <Button variant="outline" className="border-2 font-bold" onClick={() => setRepayFor(d.id)}>{d.status === "written_off" ? "Record recovery" : "Record repayment"}</Button>}
+                {owner && Number(d.outstanding) > 0 && <Button variant="outline" className="border-2 font-bold" onClick={() => setAction({ id: d.id, kind: "writeoff" })}>Write off (bad debt)</Button>}
+                <Button variant="outline" className="border-2 font-bold" onClick={() => setAction({ id: d.id, kind: "reverse" })}>Correct a mistake</Button>
+              </div>)}
+            {repayFor === d.id && <RepayForm debt={d} onDone={() => { setRepayFor(null); refresh(); }} />}
+            {action?.id === d.id && action.kind === "writeoff" && <WriteOffForm debt={d} onDone={() => { setAction(null); refresh(); }} />}
+            {action?.id === d.id && action.kind === "reverse" && <ReverseForm debt={d} onDone={() => { setAction(null); refresh(); }} />}
           </li>))}
           {!shown.length && <li className="p-4 text-center text-muted-foreground">{reg.isLoading ? "Loading…" : "No loans here."}</li>}
         </ul>
@@ -139,7 +148,7 @@ function RepayForm({ debt, onDone }: { debt: Debt; onDone: () => void }) {
   }
   return (
     <div className="mt-2 grid gap-2 sm:grid-cols-5">
-      <Input type="number" min="0.01" max={debt.outstanding} step="0.01" placeholder={`Max ${debt.outstanding}`} value={p.amount} onChange={(e) => setP({ ...p, amount: e.target.value })} className="h-12 text-lg" />
+      <Input type="number" min="0.01" step="0.01" placeholder={debt.status === "written_off" ? "Amount recovered" : `Max ${debt.outstanding}`} value={p.amount} onChange={(e) => setP({ ...p, amount: e.target.value })} className="h-12 text-lg" />
       <select value={p.method} onChange={(e) => setP({ ...p, method: e.target.value as typeof p.method })} className="h-12 rounded-md border-2 border-input bg-background px-3 text-lg">
         <option value="cash">Cash</option><option value="mpesa_manual">M-Pesa</option><option value="card">Card</option><option value="other">Other</option>
       </select>
@@ -154,11 +163,13 @@ function Statement({ customerId, debts }: { customerId: string; debts: Debt[] })
   const st = useQuery({
     queryKey: ["manual-statement", customerId],
     queryFn: async () => {
-      const [pos, rep] = await Promise.all([
+      const [pos, rep, wo, rev] = await Promise.all([
         supabase.from("customer_ledger").select("id,entry_type,amount,reference,tender_type,created_at").eq("customer_id", customerId).order("created_at", { ascending: false }).limit(100),
         supabase.from("manual_debt_repayments").select("id,debt_id,amount,method,reference,paid_on,created_at").eq("customer_id", customerId).order("created_at", { ascending: false }),
+        supabase.from("manual_debt_write_offs").select("id,debt_id,amount,reason,created_at").eq("customer_id", customerId),
+        supabase.from("manual_debt_reversals").select("id,debt_id,repayment_id,kind,reason,created_at"),
       ]);
-      return { pos: pos.data ?? [], rep: rep.data ?? [] };
+      return { pos: pos.data ?? [], rep: rep.data ?? [], wo: wo.data ?? [], rev: rev.data ?? [] };
     },
   });
   return (
@@ -171,9 +182,75 @@ function Statement({ customerId, debts }: { customerId: string; debts: Debt[] })
         <ul className="space-y-1 text-sm">{debts.map((d) => (
           <li key={d.id} className="rounded border border-border px-2 py-1">
             <b>{d.incurred_on} · {TYPES[d.debt_type]} {kes(d.principal)}</b> — owed {kes(d.outstanding)}
-            {(st.data?.rep ?? []).filter((r) => r.debt_id === d.id).map((r) => <span key={r.id} className="block">↳ {r.paid_on} repaid {kes(r.amount)} ({r.method}{r.reference ? ` ${r.reference}` : ""})</span>)}
+            {(st.data?.rev ?? []).filter((x) => x.debt_id === d.id && x.kind === "debt").map((x) => <span key={x.id} className="block font-bold">↳ REVERSED: {x.reason}</span>)}
+            {(st.data?.rep ?? []).filter((r) => r.debt_id === d.id).map((r) => {
+              const rv = (st.data?.rev ?? []).find((x) => x.repayment_id === r.id);
+              return <span key={r.id} className={`block ${rv ? "line-through" : ""}`}>↳ {r.paid_on} repaid {kes(r.amount)} ({r.method}{r.reference ? ` ${r.reference}` : ""}){rv && <span className="no-underline"> — reversed: {rv.reason}</span>}</span>;
+            })}
+            {(st.data?.wo ?? []).filter((w) => w.debt_id === d.id).map((w) => <span key={w.id} className="block">↳ {fmtEat(w.created_at)} written off {kes(w.amount)} — {w.reason}</span>)}
           </li>))}
           {!debts.length && <li className="text-muted-foreground">None</li>}</ul></div>
+    </div>
+  );
+}
+
+function WriteOffForm({ debt, onDone }: { debt: Debt; onDone: () => void }) {
+  const [amount, setAmount] = useState(String(debt.outstanding));
+  const [reason, setReason] = useState("");
+  const [cref] = useState(() => crypto.randomUUID());
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("write_off_manual_debt", { _debt: debt.id, _amount: Number(amount), _reason: reason, _client_ref: cref });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success((data as { status: string }).status === "replay" ? "Already written off" : "Written off. If money comes later, record it as a recovery.");
+    onDone();
+  }
+  return (
+    <div className="mt-2 grid gap-2 rounded-lg border-2 border-destructive p-2 sm:grid-cols-3">
+      <p className="text-sm sm:col-span-3">Owner only. A write-off is not a payment and not a sale. It stays in the history and cannot be deleted.</p>
+      <Input type="number" min="0.01" max={debt.outstanding} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-12 text-lg" />
+      <Input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} className="h-12 text-lg" />
+      <Button disabled={busy || reason.trim().length < 5} variant="destructive" className="h-12 font-black" onClick={go}>{busy ? "Saving…" : "Confirm write-off"}</Button>
+    </div>
+  );
+}
+
+function ReverseForm({ debt, onDone }: { debt: Debt; onDone: () => void }) {
+  const reps = useQuery({
+    queryKey: ["manual-debt-reps", debt.id],
+    queryFn: async () => {
+      const [r, x] = await Promise.all([
+        supabase.from("manual_debt_repayments").select("id,amount,method,reference,paid_on").eq("debt_id", debt.id).order("created_at"),
+        supabase.from("manual_debt_reversals").select("repayment_id").eq("debt_id", debt.id),
+      ]);
+      const done = new Set((x.data ?? []).map((v) => v.repayment_id));
+      return (r.data ?? []).filter((p) => !done.has(p.id));
+    },
+  });
+  const [target, setTarget] = useState<string>("");
+  const [reason, setReason] = useState("");
+  const [cref] = useState(() => crypto.randomUUID());
+  const [busy, setBusy] = useState(false);
+  async function go() {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("reverse_manual_debt_entry", { _debt: debt.id, _repayment: (target === "loan" ? null : target) as string, _reason: reason, _client_ref: cref });
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success((data as { status: string }).status === "replay" ? "Already reversed" : "Entry reversed. The original stays in the history.");
+    onDone();
+  }
+  return (
+    <div className="mt-2 grid gap-2 rounded-lg border-2 border-foreground p-2 sm:grid-cols-3">
+      <p className="text-sm sm:col-span-3">Use this only for entries made by mistake. Nothing is deleted — a reversal is added with your reason.</p>
+      <select value={target} onChange={(e) => setTarget(e.target.value)} className="h-12 rounded-md border-2 border-input bg-background px-3 text-lg">
+        <option value="">What was wrong?</option>
+        {(reps.data ?? []).map((p) => <option key={p.id} value={p.id}>Repayment {p.paid_on} · {kes(p.amount)} ({p.method})</option>)}
+        {!(reps.data ?? []).length && Number(debt.written_off) === 0 && <option value="loan">The whole loan entry</option>}
+      </select>
+      <Input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} className="h-12 text-lg" />
+      <Button disabled={busy || !target || reason.trim().length < 5} className="h-12 font-black" onClick={go}>{busy ? "Saving…" : "Reverse entry"}</Button>
     </div>
   );
 }

@@ -25,7 +25,7 @@ begin
   perform public.add_business_member(biz, um, 'manager', array[br]);
   perform public.add_business_member(biz, uc, 'cashier', array[br]);
   perform pg_temp.as_user(ux);
-  biz_x := public.create_business('Other', 'X', 'DCX1');
+  biz_x := public.create_business('Other Shop', 'Other main', 'DCX1');
   perform pg_temp.as_admin();
   insert into public.customers(business_id, name) values (biz, 'Wanjiku') returning id into cust;
   select count(*) into sales_before from public.sales where business_id = biz;
