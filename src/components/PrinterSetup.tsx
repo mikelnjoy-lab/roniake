@@ -16,10 +16,8 @@ export function PrinterSetup({ sample, width }: { sample: ReceiptData; width: 58
   const [msg, setMsg] = useState("");
   const [sup, setSup] = useState({ webusb: false, bluetooth: false, android: false, bridge: true });
   const [targets, setTargets] = useState<{ id: string; name: string; type: string }[]>([]);
-  useEffect(() => {
-    setC(loadConfig()); setSup(support());
-    const a = androidBridge(); if (a) { try { setTargets(JSON.parse(a.listPrinters())); } catch { /* ignore */ } }
-  }, []);
+  const refreshTargets = () => { const a = androidBridge(); if (a) { try { setTargets(JSON.parse(a.listPrinters())); } catch { /* ignore */ } } };
+  useEffect(() => { setC(loadConfig()); setSup(support()); refreshTargets(); }, []);
   const avail = (k: TransportKind) => k === "browser" || k === "bridge" || sup[k as "webusb" | "bluetooth" | "android"];
   const update = (n: PrinterConfig) => { setC(n); saveConfig(n); setSt(avail(n.kind) ? "configured" : "unavailable"); setMsg(""); };
   const run = async (fn: () => Promise<unknown>, ok: string) => {
@@ -41,14 +39,21 @@ export function PrinterSetup({ sample, width }: { sample: ReceiptData; width: 58
       </div>
       {c.kind === "bridge" && (
         <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          <div className="sm:col-span-3"><Label>Bridge token</Label><Input type="password" autoComplete="off" value={c.bridgeToken ?? ""} placeholder="Shown in the bridge window when it starts" onChange={(e) => update({ ...c, bridgeToken: e.target.value.trim() })} /></div>
           <div><Label>Bridge address</Label><Input value={c.bridgeUrl ?? ""} placeholder="http://localhost:9180" onChange={(e) => update({ ...c, bridgeUrl: e.target.value })} /></div>
           <div><Label>Printer IP</Label><Input value={c.printerHost ?? ""} placeholder="192.168.1.50" onChange={(e) => update({ ...c, printerHost: e.target.value })} /></div>
           <div><Label>Port</Label><Input type="number" value={c.printerPort ?? 9100} onChange={(e) => update({ ...c, printerPort: Number(e.target.value) })} /></div>
-          <p className="text-sm sm:col-span-3">Browsers cannot open raw network connections to a printer. A small print-bridge program must run on this computer or the shop network. If the app is on https, the bridge must be on https or localhost.</p>
+          <p className="text-sm sm:col-span-3">Browsers cannot open raw network connections to a printer. Run the RONIA print bridge on this computer (see the setup guide), then paste its token here. The bridge only sends to private shop-network printer addresses.</p>
         </div>
       )}
       {c.kind === "android" && (
-        <div className="mt-2"><Label>Printer</Label>
+        <div className="mt-2">
+          <div className="mb-2 flex flex-wrap gap-2">
+            <Button type="button" variant="outline" className="border-2 font-bold" onClick={() => { const a = androidBridge(); try { const r = JSON.parse(a?.requestPermissions?.() ?? "{}"); setMsg(r.granted ? "Bluetooth permission already allowed." : "Answer the Android prompt, then tap Refresh list."); } catch { /* old shell */ } }}>Allow Bluetooth</Button>
+            <Button type="button" variant="outline" className="border-2 font-bold" onClick={refreshTargets}>Refresh list</Button>
+          </div>
+          <p className="mb-1 text-sm">Pair Bluetooth printers first in Android Settings → Bluetooth. Plug USB printers in with an OTG cable.</p>
+          <Label>Printer</Label>
           <select value={c.androidTarget ?? ""} onChange={(e) => update({ ...c, androidTarget: e.target.value })} className="h-12 w-full rounded-md border-2 border-input bg-background px-3">
             <option value="">Choose…</option>{targets.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.type})</option>)}
           </select>
