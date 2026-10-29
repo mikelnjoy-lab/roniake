@@ -13,9 +13,10 @@ export async function printReceipt(r: ReceiptData, width: 58 | 80, opts: { repri
   try {
     const c = loadConfig();
     if (c.kind === "browser") { window.print(); return { via: "browser" }; }
+    const job = `${r.receipt_no}:${crypto.randomUUID()}`; // one id per press; transports drop repeats of the same copy
     const copies = Math.min(Math.max(r.settings?.copies ?? 1, 1), 3);
     for (let i = 0; i < copies; i++) {
-      await sendRaw(c, receiptToEscPos(r, width, { copyLabel: opts.reprint ? "REPRINT" : copies > 1 ? `COPY ${i + 1}/${copies}` : undefined }));
+      await sendRaw(c, receiptToEscPos(r, width, { copyLabel: opts.reprint ? "REPRINT" : copies > 1 ? `COPY ${i + 1}/${copies}` : undefined }), `${job}:${i}`);
     }
     return { via: c.kind };
   } catch (e) {

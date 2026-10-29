@@ -228,3 +228,33 @@ No automated, browser, Android or physical-printer tests were run for this updat
 
 ### Manual checks awaiting owner
 Sales filters (2:00–5:30 PM EAT range, branch/cashier/payment/status, pagination, CSV); cashier sees only own sales; loan record/repay/over-repay refusal/double-tap replay/overdue; loans absent from sales totals; WebUSB/BLE/bridge/Android test receipts on real printers; auto-print single copy.
+
+---
+
+## Update 2026-10-27 — Parallel workstreams A (Deni corrections), B (print bridge), C (Android printing)
+
+Shared dependencies checked before editing: A touches only the database (new migration) and `ManualDebtBook.tsx`/`customers.tsx`; B and C share `src/lib/printing/transports.ts`, `print.ts` and `PrinterSetup.tsx` (edited once, in sequence: B fields, then C fields). No change to sales, post_sale, receipts, VAT, assortment or subscriptions. No git branches available in this environment; isolation was by file ownership and sequential edits.
+
+### A. Deni correction & write-off policy — **VERIFIED (database)**; UI IMPLEMENTED, awaiting owner browser check
+Acceptance criteria: no deletion of posted debts/repayments; Owner-only write-offs; reversals need written reason + reference to original entry; server-side authorization; database duplicate protection; immutable audit; manual loans stay separate from POS Deni; write-off is not a repayment, sale or revenue; recovery after write-off.
+Implementation: migration `0020_deni_corrections_write_offs` — tables `manual_debt_reversals` (kind debt|repayment, unique per original entry, client_ref unique) and `manual_debt_write_offs` (client_ref unique), both RLS read-only for deni/report roles, no direct writes, immutable triggers; `manual_debt_figures()` derives repaid (net of reversals), written off, outstanding, recovered; RPCs `write_off_manual_debt` (business.manage = Owner), `reverse_manual_debt_entry` (deni.manage; loan reversal only when no live repayments/write-offs); `record_manual_debt_repayment` now refuses reversed loans and accepts recovery after write-off up to principal minus repayments; `manual_debt_register` adds written_off, recovered, statuses `written_off`/`reversed`. Audit actions: deni.manual_debt_written_off, deni.manual_repayment_reversed, deni.manual_debt_reversed, deni.manual_debt_recovered. UI: "Write off (bad debt)" (owners only), "Correct a mistake", "Record recovery", Written off filter, statement shows reversals/write-offs.
+Accounting dependency: no general ledger exists in the locked architecture; write-offs are recorded only as debt-book facts. Any accounting expense treatment (bad-debt expense account) awaits an approved ledger design.
+Tests: `tests/deni_corrections/verification.sql` — **32/32 passed** (rollback-only, run 2026-10-27; first run failed on a test-data name constraint, fixed in the test, no code change). Covers balances, reversals, write-offs, duplicates, unauthorized users (manager/cashier/other business), audit, immutability, recovery, no sales/stock side effects.
+Outstanding: owner browser check of the new buttons.
+
+### B. Local network ESC/POS print bridge — **IMPLEMENTED; software VERIFIED; physical printer NOT tested**
+Acceptance criteria: localhost default; authenticated requests; restricted CORS/origin; destination validation; SSRF protection; ESC/POS forwarding; status, errors, test print; no internet exposure by default; documentation.
+Implementation: `bridge/ronia-print-bridge.mjs` (Node 18+, zero deps; 127.0.0.1:9180; token header; origin allowlist; private IPv4 + ports 9100–9103; optional printer allowlist; 256 KB; 5 s timeout; job_id duplicate guard); `bridge/README.md` (install, autostart, security table, troubleshooting). App: bridge token field, Check connection now verifies bridge and printer (`/health` + `/test`), each print press sends job ids.
+Tests: `node bridge/test-bridge.mjs` — **20/20 passed** against a fake local printer (auth, CORS, 9 SSRF cases, byte-exact forwarding, duplicate job, printer-off error).
+Outstanding: real printer test on shop network; Windows/macOS service install by owner. Risk: anyone with the token on that computer can print; keep RONIA_BRIDGE_HOST at localhost.
+
+### C. Capacitor Android native printer — **IMPLEMENTED (code); NOT compiled; NOT device-tested**
+Acceptance criteria: inspect existing adapter; clear printer interface; Bluetooth SPP, USB OTG, Wi-Fi; permissions, failures, disconnection, cancellation, duplicate protection; preserve browser printing and 58/80 mm.
+Implementation: Capacitor 7 project in `android/` (appId ke.ronia.business, loads the published app; `capacitor.config.ts`, fallback page `native/capacitor-web/`). Adapter moved and hardened at `android/app/src/main/java/ke/ronia/business/RoniaAndroidPrinter.kt`: requestPermissions(), printJob() with 10-min duplicate guard, cancel(), single-print lock, typed error codes, network target restricted to private IPv4/ports 9100–9103; wired in `MainActivity.java`; manifest Bluetooth/USB permissions; Kotlin gradle plugin added. Web: Allow Bluetooth / Refresh list buttons; duplicate-safe printJob used when available; browser print unchanged.
+Tests: none run — no Android SDK here. Physical device results: _none recorded yet_ (record device, Android version, printer model, transport, pass/fail).
+Blocked on: owner building the APK in Android Studio (`npx cap sync android && npx cap open android`) and testing with real printers.
+
+### Shared integration & regression
+- Printing remains transport-only: no printer path calls post_sale, void or return RPCs (inspected print.ts/transports.ts/Kotlin).
+- Typecheck clean after all three workstreams. Prior suites not rerun (unaffected tables/functions; only manual-debt functions were replaced and are covered by the 32-check suite).
+- Not performed: browser checks, physical printers, Android build.
