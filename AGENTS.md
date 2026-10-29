@@ -16,3 +16,5 @@
 - Plan prices/limits live in immutable published `plan_versions`; subscriptions pin a version and only move by explicit platform action. Why: price edits must never silently change or charge existing subscribers.
 - Receipt rendering (Receipt.tsx / printing/escpos.ts) stays separate from printer transports (printing/transports.ts); printer config is per device. Why: one receipt engine across browser, bridge and Android.
 - Manual loans live in manual_debts/manual_debt_repayments, never in sales or customer_ledger. Why: loans must not affect revenue, stock or POS Deni balances.
+- Manual-debt corrections are append-only rows (manual_debt_reversals, manual_debt_write_offs); balances are derived only via manual_debt_figures(); write-offs need business.manage. Why: posted debt history must never be edited or deleted.
+- Network printing goes through bridge/ronia-print-bridge.mjs (localhost, token, origin allowlist, private-IPv4 targets only); Android printing goes through window.RoniaAndroidPrinter injected by android/ MainActivity. Why: browsers cannot reach raw printer sockets, and both paths must stay transport-only.
