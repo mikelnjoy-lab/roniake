@@ -148,6 +148,13 @@
       "when": 1793079669139,
       "tag": "0020_deni_corrections_write_offs",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793336316447,
+      "tag": "0021_restrict_role_permissions_platform_settings_reads",
+      "breakpoints": true
     }
   ]
 }
