@@ -130,6 +130,8 @@ export type Database = {
           paper_width: number
           phone: string | null
           show_address: boolean
+          show_branch_name: boolean
+          show_business_name: boolean
           show_cashier: boolean
           show_footer: boolean
           show_logo: boolean
@@ -150,6 +152,8 @@ export type Database = {
           paper_width?: number
           phone?: string | null
           show_address?: boolean
+          show_branch_name?: boolean
+          show_business_name?: boolean
           show_cashier?: boolean
           show_footer?: boolean
           show_logo?: boolean
@@ -170,6 +174,8 @@ export type Database = {
           paper_width?: number
           phone?: string | null
           show_address?: boolean
+          show_branch_name?: boolean
+          show_business_name?: boolean
           show_cashier?: boolean
           show_footer?: boolean
           show_logo?: boolean
