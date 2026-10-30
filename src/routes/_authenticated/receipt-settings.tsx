@@ -24,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/receipt-settings")({
 });
 
 const TOGGLES: [keyof ReceiptSettings, string][] = [
+  ["show_business_name", "Show registered business name"], ["show_branch_name", "Show branch name & code"],
   ["show_address", "Show address"], ["show_phone", "Show phone"], ["show_footer", "Show footer"], ["show_cashier", "Show cashier name"], ["show_logo", "Show logo"],
 ];
 

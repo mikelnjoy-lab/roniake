@@ -32,9 +32,9 @@ export function receiptToEscPos(r: ReceiptData, width: 58 | 80, opts: { copyLabe
   if (r.sample) b.bold(true).line("SAMPLE - NOT A SALE").bold(false);
   if (opts.copyLabel) b.line(opts.copyLabel);
   b.bold(true).big(true); wrap(title).forEach((l) => b.line(l)); b.big(false).bold(false);
-  if (title !== r.business) wrap(r.business).forEach((l) => b.line(l));
+  if (s.show_business_name !== false && title !== r.business) wrap(r.business).forEach((l) => b.line(l));
   if (r.kra_pin) b.line(`PIN ${r.kra_pin}`);
-  b.line(r.branch);
+  if (s.show_branch_name !== false) b.line(r.branch);
   if (s.show_address !== false && s.address) wrap(s.address).forEach((l) => b.line(l));
   if (s.show_phone !== false && s.phone) b.line(`Tel ${s.phone}`);
   b.line(`Receipt ${r.receipt_no}`);

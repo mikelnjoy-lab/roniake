@@ -6,6 +6,7 @@ export type ReceiptSettings = {
   version?: number;
   display_name?: string | null; phone?: string | null; address?: string | null; footer?: string | null; logo_url?: string | null;
   show_logo?: boolean; show_phone?: boolean; show_address?: boolean; show_cashier?: boolean; show_footer?: boolean;
+  show_business_name?: boolean; show_branch_name?: boolean;
   paper_width?: 58 | 80; auto_print?: boolean; copies?: number;
 };
 
@@ -33,9 +34,9 @@ export function Receipt({ r, width }: { r: ReceiptData; width: 58 | 80 }) {
       {s.show_logo && s.logo_url && <img src={s.logo_url} alt="" className="mx-auto mb-1 max-h-12" />}
       <p className="text-center text-sm font-bold">{title}</p>
       {/* Legal identity is always the Business's, never the branch trading name */}
-      {title !== r.business && <p className="text-center">{r.business}</p>}
+      {s.show_business_name !== false && title !== r.business && <p className="text-center">{r.business}</p>}
       {r.kra_pin && <p className="text-center">PIN {r.kra_pin}</p>}
-      <p className="text-center">{r.branch}</p>
+      {s.show_branch_name !== false && <p className="text-center">{r.branch}</p>}
       {s.show_address !== false && s.address && <p className="text-center">{s.address}</p>}
       {s.show_phone !== false && s.phone && <p className="text-center">Tel {s.phone}</p>}
       <p className="text-center">Receipt {r.receipt_no}</p>

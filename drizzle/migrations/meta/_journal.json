@@ -155,6 +155,13 @@
       "when": 1793336316447,
       "tag": "0021_restrict_role_permissions_platform_settings_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1793336572221,
+      "tag": "0022_receipt_optional_business_branch_lines",
+      "breakpoints": true
     }
   ]
 }
