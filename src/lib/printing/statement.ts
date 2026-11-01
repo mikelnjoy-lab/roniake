@@ -3,8 +3,8 @@ import { loadConfig, sendRaw } from "./transports";
 // Customer Deni statement on receipt-width paper. Read-only: it prints recorded
 // facts and never creates, changes or reverses any debt, sale or payment.
 export type StatementData = {
-  shop: string; business: string; kra_pin?: string | null; branch?: string | null; phone?: string | null;
-  customer: string; customer_phone?: string | null; printed_at: string;
+  shop: string; business: string; kra_pin?: string | null | undefined; branch?: string | null | undefined; phone?: string | null | undefined;
+  customer: string; customer_phone?: string | null | undefined; printed_at: string;
   till_balance: number;
   till: { at: string; label: string; amount: number }[];
   loans: {
