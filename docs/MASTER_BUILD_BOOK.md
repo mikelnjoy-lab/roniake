@@ -258,3 +258,9 @@ Blocked on: owner building the APK in Android Studio (`npx cap sync android && n
 - Printing remains transport-only: no printer path calls post_sale, void or return RPCs (inspected print.ts/transports.ts/Kotlin).
 - Typecheck clean after all three workstreams. Prior suites not rerun (unaffected tables/functions; only manual-debt functions were replaced and are covered by the 32-check suite).
 - Not performed: browser checks, physical printers, Android build.
+
+## Update 2026-11-01 — Customer Deni statement printing — IMPLEMENTED, awaiting owner print test
+- "Print statement" button on each person's statement (Customers & Deni → By person). Prints till Deni entries (last 100) and balance, each loan with repayments (reversed ones marked), write-offs, loan reversals, per-loan and total owed.
+- `src/lib/printing/statement.ts`: one text layout at 32/48 columns for 58/80mm (branch paper width), sent as ESC/POS through the configured printer, or a receipt-width print window in the browser; failure falls back to the browser window. Read-only — no database writes. Labelled "Statement only – not a receipt and not a KRA fiscal invoice".
+- Tests: typecheck only; no browser or physical printer test.
+- Support staff sign-in: still REQUIRES DECISION (who support staff are); not built.
