@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { kes } from "@/lib/tenant-guard";
 import { eatToday, fmtEat } from "@/lib/eat";
+import { printStatement } from "@/lib/printing/statement";
+import { branchReceiptSettingsQuery } from "@/components/Receipt";
 
 // Manual loans/debts that did NOT come from a POS sale. They never create sales,
 // revenue, stock movements or COGS; POS Deni stays in customers.balance / customer_ledger.
@@ -17,7 +19,7 @@ type Customer = { id: string; name: string; phone: string | null; balance: numbe
 
 const STATUS_LABEL: Record<string, string> = { open: "Open", overdue: "Overdue", settled: "Paid off", written_off: "Written off", reversed: "Reversed (entered by mistake)" };
 
-export function ManualDebtBook({ businessId, customers, manage, owner = false }: { businessId: string; customers: Customer[]; manage: boolean; owner?: boolean }) {
+export function ManualDebtBook({ businessId, branchId = null, customers, manage, owner = false }: { businessId: string; branchId?: string | null; customers: Customer[]; manage: boolean; owner?: boolean }) {
   const qc = useQueryClient();
   const reg = useQuery({
     queryKey: ["manual-debts", businessId],
@@ -101,7 +103,7 @@ export function ManualDebtBook({ businessId, customers, manage, owner = false }:
               <span><b className="text-lg">{p.name}</b><span className="block text-sm">Till Deni {kes(p.pos)} · Loans {kes(p.loans)}</span></span>
               <span className="text-xl font-black">{kes(p.combined)}</span>
             </button>
-            {person === p.id && <Statement customerId={p.id} debts={debts.filter((d) => d.customer_id === p.id)} />}
+            {person === p.id && <Statement customerId={p.id} businessId={businessId} branchId={branchId} customer={customers.find((c) => c.id === p.id) ?? { id: p.id, name: p.name, phone: null, balance: p.pos }} debts={debts.filter((d) => d.customer_id === p.id)} />}
           </li>))}
           {!people.length && <li className="p-4 text-center text-muted-foreground">Nobody owes anything.</li>}
         </ul>
@@ -159,7 +161,8 @@ function RepayForm({ debt, onDone }: { debt: Debt; onDone: () => void }) {
   );
 }
 
-function Statement({ customerId, debts }: { customerId: string; debts: Debt[] }) {
+function Statement({ customerId, businessId, branchId, customer, debts }: { customerId: string; businessId: string; branchId: string | null; customer: Customer; debts: Debt[] }) {
+  const [printing, setPrinting] = useState(false);
   const st = useQuery({
     queryKey: ["manual-statement", customerId],
     queryFn: async () => {
@@ -172,7 +175,41 @@ function Statement({ customerId, debts }: { customerId: string; debts: Debt[] })
       return { pos: pos.data ?? [], rep: rep.data ?? [], wo: wo.data ?? [], rev: rev.data ?? [] };
     },
   });
+  async function print() {
+    if (!st.data) return;
+    setPrinting(true);
+    try {
+      const [biz, br, rs] = await Promise.all([
+        supabase.from("businesses").select("name,kra_pin").eq("id", businessId).single(),
+        branchId ? supabase.from("branches").select("name,code").eq("id", branchId).maybeSingle() : Promise.resolve({ data: null }),
+        branchId ? branchReceiptSettingsQuery(supabase, branchId).queryFn() : Promise.resolve(null),
+      ]);
+      const business = biz.data?.name ?? "";
+      const d = st.data;
+      const res = await printStatement({
+        shop: rs?.display_name?.trim() || business, business: rs?.show_business_name === false ? (rs?.display_name?.trim() || business) : business,
+        kra_pin: biz.data?.kra_pin, branch: br.data && rs?.show_branch_name !== false ? `${br.data.name} (${br.data.code})` : null,
+        phone: rs?.show_phone !== false ? rs?.phone : null,
+        customer: customer.name, customer_phone: customer.phone, printed_at: new Date().toISOString(),
+        till_balance: Number(customer.balance),
+        till: [...d.pos].reverse().map((l) => ({ at: fmtEat(l.created_at), amount: Number(l.amount),
+          label: l.entry_type === "credit_sale" ? `Sale ${l.reference ?? ""}` : l.entry_type === "repayment" ? `Repaid (${l.tender_type})` : `${l.entry_type} ${l.reference ?? ""}` })),
+        loans: debts.map((x) => ({
+          date: x.incurred_on, type: TYPES[x.debt_type] ?? x.debt_type, principal: Number(x.principal), outstanding: Number(x.outstanding), status: STATUS_LABEL[x.status] ?? x.status,
+          reversed: d.rev.find((r) => r.debt_id === x.id && r.kind === "debt")?.reason ?? null,
+          entries: [
+            ...d.rep.filter((r) => r.debt_id === x.id).map((r) => ({ sort: r.created_at, date: r.paid_on, label: `Repaid ${r.method}${r.reference ? ` ${r.reference}` : ""}`, amount: Number(r.amount), struck: d.rev.some((v) => v.repayment_id === r.id) })),
+            ...d.wo.filter((w) => w.debt_id === x.id).map((w) => ({ sort: w.created_at, date: fmtEat(w.created_at), label: `Written off: ${w.reason}`, amount: Number(w.amount), struck: false })),
+          ].sort((a, b) => a.sort.localeCompare(b.sort)),
+        })),
+      }, (rs?.paper_width === 58 ? 58 : 80));
+      if (res.error) toast.error(`Printer: ${res.error}`);
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setPrinting(false); }
+  }
   return (
+    <>
+    <Button variant="outline" className="mt-3 h-12 border-2 font-black" disabled={!st.data || printing} onClick={print}>{printing ? "Printing…" : "Print statement"}</Button>
     <div className="mt-3 grid gap-3 border-t-2 border-border pt-3 md:grid-cols-2">
       <div><p className="font-black">Till Deni (from sales)</p>
         <ul className="space-y-1 text-sm">{(st.data?.pos ?? []).map((l) => (
@@ -191,6 +228,7 @@ function Statement({ customerId, debts }: { customerId: string; debts: Debt[] })
           </li>))}
           {!debts.length && <li className="text-muted-foreground">None</li>}</ul></div>
     </div>
+    </>
   );
 }
 

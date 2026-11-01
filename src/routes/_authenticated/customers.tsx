@@ -99,7 +99,7 @@ function Customers() {
         ))}
         {list.data?.length === 0 && <li className="p-6 text-center text-muted-foreground">No customers yet.</li>}
       </ul>
-      {(manage || can(tenant.permissions, "reports.view")) && <ManualDebtBook businessId={tenant.business_id} customers={list.data ?? []} manage={manage} owner={can(tenant.permissions, "business.manage")} />}
+      {(manage || can(tenant.permissions, "reports.view")) && <ManualDebtBook businessId={tenant.business_id} branchId={tenant.branch_id} customers={list.data ?? []} manage={manage} owner={can(tenant.permissions, "business.manage")} />}
     </AppShell>
   );
 }
